@@ -42,13 +42,8 @@ void setup() {
   }
 }
 
-//When we are in send state
-void doSend() {
+void doFilterOnOff() {
   int diff = 0;
-  if(midi_state == midi_send) {
-        switch(cmd_byte) {
-          case 0x90:
-          case 0x80:
             //arg1_byte == 0 for 0x90 is similar to 0x80
             if(cmd_byte == 0x90 && arg1_byte != 0) {
               //If there was a previous note down, then compare and possibly shift....
@@ -71,6 +66,15 @@ void doSend() {
             if(cmd_byte == 0x80 || arg1_byte == 0) {
               arg2_byte = shifted_noteDown[arg2_byte];
             }
+}
+
+//When we are in send state
+void doSend() {
+  if(midi_state == midi_send) {
+        switch(cmd_byte) {
+          case 0x90:
+          case 0x80:
+            doFilterOnOff();
           case 0xA0:
           case 0xB0:
           case 0xC0:
