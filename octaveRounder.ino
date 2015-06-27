@@ -1,3 +1,25 @@
+/*
+  Schematic:
+  
+  Just stack an Arduino Uni (r3) with a Olimex MIDI shield.
+  Plug in MIDI in to a keyboard, and MIDI out to a synth.
+  Ensure that MIDI channel out is same as channel receiving in synth (this does not channel rewrite).
+  
+  This proxy works by:
+  
+  - was last note down lower than -6 semitones from last?  
+      Octave switch up, and remember what note we must come up on to turn note off
+  - was last note up higher than 6 semitones from last?
+      Octave switch up, and remember what note we must come up on to turn note off
+      
+  Any byte sequences unrecognized are passed through.  The only effect of this pedal should be to automatically octave switch.
+  
+  TODO:
+    - add a footswitch such that:
+      - foot comes up, this pedal just passes MIDI.  there is no octave switching
+      - foot goes down, pedal does auto octave switching.
+*/
+
 
 enum MidiState {
   midi_needStatus,
