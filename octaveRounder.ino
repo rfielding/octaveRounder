@@ -23,7 +23,6 @@
 
 enum MidiState {
   midi_needStatus,
-  midi_gotStatus,
   midi_2Args,
   midi_1Args,
   midi_send
@@ -44,23 +43,24 @@ int octave_shift = 0;
 const int midi_noteCount = 128;
 byte shifted_noteDown[midi_noteCount];
 
-//Here to toggle light as we get on/off events.
-int toggle = 1;
-
 void setup() {
   Serial.begin(31250);
-  pinMode(13, OUTPUT);
-  //unnecessary
-  pinMode(2, OUTPUT);
-  //necessary?
-  pinMode(1, OUTPUT);
-  //necessary?
-  pinMode(0, INPUT);
-  //unnecessary
-  digitalWrite(2, HIGH);
+  
+  for(int i=0; i<12; i++) {
+    pinMode( i + 2, OUTPUT );
+    digitalWrite( i + 2, LOW );
+  }
+  
   midi_state = midi_needStatus;
   for (int i = 0; i < midi_noteCount; i++) {
     shifted_noteDown[i] = i;
+  }
+}
+
+void showLastNoteDown() {
+  byte n = (arg2_byte % 12);
+  for(byte i=0; i<12; i++) {
+    digitalWrite( i + 2, n==i);
   }
 }
 
@@ -84,6 +84,7 @@ void doFilterOnOff() {
     shifted_noteDown[arg2_byte] %= midi_noteCount; //This is the note that we translate to on note up
     last_noteDown = arg2_byte; //can no longer be never_noteDown
     arg2_byte = shifted_noteDown[arg2_byte]; //This is the byte we send (octave translated).
+    showLastNoteDown();
   }
   if (cmd_byte == 0x80 || arg1_byte == 0) {
     arg2_byte = shifted_noteDown[arg2_byte];
@@ -126,8 +127,6 @@ void needStatus() {
       switch (cmd_byte) {
         case 0x90:
         case 0x80:
-          digitalWrite(13, toggle % 2);
-          toggle++;
         case 0xA0:
         case 0xB0:
         case 0xC0:
