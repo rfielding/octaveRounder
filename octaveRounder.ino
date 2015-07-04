@@ -134,8 +134,8 @@ static inline void doFilterOnOff() {
     last_noteDown = arg2_byte; //can no longer be never_noteDown
 
     //We can only handle 1 channel and one note down per note!!!
-    arg2Send_byte = (byte)(((int)arg2_byte) + octave_shift * 12);
-
+    arg2Send_byte = ((byte)((((int)arg2_byte) + octave_shift * 12) % midi_noteCount)) & 0x7F;
+    
     shifted_noteDown[arg2_byte] = arg2Send_byte;
 
     //Remember enough to handle same note overlaps
@@ -175,19 +175,22 @@ static inline void do2ArgSend() {
   Serial.write(arg2Send_byte);
   Serial.write(arg1Send_byte);
 
-  ///*
   //when undoing a retriggered note, unbury the note underneath it that should be on
   if (isNoteOff()) {
     //if the count is still 1 or more after doFilterOnOff, then turn the other instance of the note back on.
     if ( ! isNoteGone() ) {
-      byte statusSend_bytePost = 0x90 | chan_byte;
-      byte arg1Send_bytePost = vol_noteDown[arg2Send_byte];
-      Serial.write(statusSend_bytePost);
-      Serial.write(arg2Send_byte);
-      Serial.write(arg1Send_bytePost);
+      if ( count_noteDown[arg2Send_byte] > 10 || count_noteDown[arg2Send_byte] < 0) {
+        //panic!!!!
+        resetMidi();
+      } else {
+        byte statusSend_bytePost = 0x90 | chan_byte;
+        byte arg1Send_bytePost = vol_noteDown[arg2Send_byte];
+        Serial.write(statusSend_bytePost);
+        Serial.write(arg2Send_byte);
+        Serial.write(arg1Send_bytePost);
+      }
     }
   }
-  //*/
 }
 
 static inline void do1ArgSend() {
@@ -239,7 +242,7 @@ static inline void needStatus() {
           midi_state = midi_1Args;
           break;
         default:
-          Serial.write(status_byte); //No idea what it is. F0 and any byte without high bit set
+          //Serial.write(status_byte); //No idea what it is. F0 and any byte without high bit set
           break;
       }
     }
