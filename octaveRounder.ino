@@ -1,23 +1,25 @@
 /*
   Schematic:
-  
+
   Just stack an Arduino Uni (r3) with a Olimex MIDI shield.
   Plug in MIDI in to a keyboard, and MIDI out to a synth.
   Ensure that MIDI channel out is same as channel receiving in synth (this does not channel rewrite).
-  
+
   This proxy works by:
-  
-  - was last note down lower than -6 semitones from last?  
+
+  - was last note down lower than -6 semitones from last?
       Octave switch up, and remember what note we must come up on to turn note off
   - was last note up higher than 6 semitones from last?
       Octave switch up, and remember what note we must come up on to turn note off
-      
+
   Any byte sequences unrecognized are passed through.  The only effect of this pedal should be to automatically octave switch.
-  
+
   TODO:
     - add a footswitch such that:
       - foot comes up, this pedal just passes MIDI.  there is no octave switching
       - foot goes down, pedal does auto octave switching.
+      
+   This MISBEHAVES with more than one channel passing through!
 */
 
 
@@ -33,7 +35,7 @@ const int midi_noteCount = 128;
 
 //
 // Set ALL of these variables in reset.
-// 
+//
 MidiState midi_state;
 
 //Number args down to 1 because of state machine handling.  ie:   cmd_byte arg2_byte arg1_byte
@@ -50,12 +52,12 @@ byte arg1Send_byte;
 byte never_noteDown;
 byte last_noteDown;
 int octave_shift;
-//index is the *physical* midi note.  the value is the *sent* midi note.
-byte shifted_noteDown[midi_noteCount];  
-//index is the *sent* midi note.  the value is the (last!) volume for this note's note down
-byte vol_noteDown[midi_noteCount]; 
 //count how many times this note is on for the client.  most synths don't handle note overlap correctly.
-byte count_noteDown[midi_noteCount];
+int count_noteDown[midi_noteCount];
+//index is the *sent* midi note.  the value is the (last!) volume for this note's note down
+byte vol_noteDown[midi_noteCount];
+//index is the *physical* midi note.  the value is the *sent* midi note.
+byte shifted_noteDown[midi_noteCount];
 
 
 
@@ -77,19 +79,19 @@ void resetMidi() {
   never_noteDown = 255; //Arbitrary impossible MIDI note
   last_noteDown = never_noteDown;
   octave_shift = 0;
-  
-  for(int i=0; i<12; i++) {
+
+  for (int i = 0; i < 12; i++) {
     pinMode( i + 2, OUTPUT );
     digitalWrite( i + 2, LOW );
   }
-  
+
   midi_state = midi_needStatus;
   for (int i = 0; i < midi_noteCount; i++) {
     shifted_noteDown[i] = i;
     vol_noteDown[i] = 0;
     count_noteDown[i] = 0;
   }
-  
+
   //todo: wipe all stuck notes?
 }
 
@@ -97,17 +99,18 @@ void setup() {
   resetMidi();
 }
 
-void showLastNoteDown() {
+static inline void showLastNoteDown() {
   byte n = (arg2_byte % 12);
-  for(byte i=0; i<12; i++) {
-    digitalWrite( (i+4)%12 + 2, n==i);
+  for (byte i = 0; i < 12; i++) {
+    digitalWrite( (i + 4) % 12 + 2, n == i);
   }
 }
 
-void doFilterOnOff() {
+static inline void doFilterOnOff() {
   int diff = 0;
   //arg1_byte == 0 for 0x90 is similar to 0x80
   if (cmd_byte == 0x90 && arg1_byte != 0) {
+    
     //If there was a previous note down, then compare and possibly shift....
     if (last_noteDown != never_noteDown) {
       diff = (int)arg2_byte - (int)last_noteDown;
@@ -118,66 +121,84 @@ void doFilterOnOff() {
         octave_shift++;
       }
     }
+    
     //Record how the note went down, and use that to plug in the note as it comes back up.
-    //We can only handle 1 channel and one note down per note!!!
-    shifted_noteDown[arg2_byte] = (((int)arg2_byte) + octave_shift * 12);
-    shifted_noteDown[arg2_byte] %= midi_noteCount; //This is the note that we translate to on note up
     last_noteDown = arg2_byte; //can no longer be never_noteDown
-    arg2Send_byte = shifted_noteDown[arg2_byte]; //This is the byte we send (octave translated).
+    
+    //We can only handle 1 channel and one note down per note!!!
+    arg2Send_byte = (byte)(((int)arg2_byte) + octave_shift * 12);
+    
+    shifted_noteDown[arg2_byte] = arg2Send_byte;
+
+    //Remember enough to handle same note overlaps    
     count_noteDown[arg2Send_byte]++; //Remember that we have an outstanding note that must be turned off.
     vol_noteDown[arg2Send_byte] = arg1Send_byte; //Remember the last volume for this *sent* note. (not the physical key)
+    
+    //Do the blinky lights
     showLastNoteDown();
   }
+  
   if (cmd_byte == 0x80 || arg1_byte == 0) {
     arg2Send_byte = shifted_noteDown[arg2_byte];
     count_noteDown[arg2_byte]--; //Should never go below zero
   }
 }
 
-//Precondition: midi_state == midi_send
-void preHandleMultipleInstances() {
-  //If note is already on turn existing one off so that it isn't buried.
-  if(cmd_byte == 0x90 && arg1_byte != 0) {
-    if( count_noteDown[ arg2_byte ] > 1) {
-      Serial.write( status_byte );
-      Serial.write( arg2_byte );
-      Serial.write( 0 );
+
+static inline void do2ArgSend() {
+  ////This is IMPOSSIBLE on a normal keyboard because there are no note overlaps, so expect that synths DO NOT handle overlaps right!
+  //turn off notes before retriggering them
+  /*
+  if (cmd_byte == 0x90 && arg1Send_byte != 0) {
+    if (count_noteDown[arg2Send_byte] > 1) {
+      byte arg1Send_bytePre = 0x00;
+      //temporarily turn the note off (just before we turn it on again!)
+      Serial.write(statusSend_byte);
+      Serial.write(arg2Send_byte);
+      Serial.write(arg1Send_bytePre);
     }
   }
+  */
+  
+  Serial.write(statusSend_byte);
+  Serial.write(arg2Send_byte);
+  Serial.write(arg1Send_byte);
+  
+  /*
+  //when undoing a retriggered note, unbury the note underneath it that should be on
+  if ((cmd_byte == 0x90 && arg1Send_byte == 0) || cmd_byte == 0x80) {
+    //if the count is still 1 or more after doFilterOnOff, then turn the other instance of the note back on.
+    if (count_noteDown[arg2Send_byte] != 0) {
+      byte statusSend_bytePost = 0x90 | chan_byte;
+      byte arg1Send_bytePost = vol_noteDown[arg2Send_byte];
+      Serial.write(statusSend_bytePost);
+      Serial.write(arg2Send_byte);
+      Serial.write(arg1Send_bytePost);
+    }
+  }
+  */
 }
 
-//Precondition: midi_state == midi_send
-void postHandleMultipleInstances() {
-   //If it's turning off, but there are instances open, then send a re-trigger so we can hear the note that we unburied.
-    if( cmd_byte == 0x80 || (cmd_byte == 0x90 && arg1_byte == 0)) {
-      if( count_noteDown[arg2_byte] > 0 ) {
-        Serial.write( 0x90 | chan_byte );
-        Serial.write( arg2_byte );
-        Serial.write( vol_noteDown[arg2_byte] );
-      }
-    }
+static inline void do1ArgSend() {
+  Serial.write(statusSend_byte);
+  Serial.write(arg1Send_byte);
 }
 
 //When we are in send state
-void doSend() {
-  if (midi_state == midi_send) {    
+static inline void doSend() {
+  if (midi_state == midi_send) {
     switch (cmd_byte) {
       case 0x90:
       case 0x80:
-        //preHandleMultipleInstances();
         doFilterOnOff();
       case 0xA0:
       case 0xB0:
       case 0xC0:
       case 0xE0:
-        Serial.write(statusSend_byte);
-        Serial.write(arg2Send_byte);
-        Serial.write(arg1Send_byte);
-        //postHandleMultipleInstances();
+        do2ArgSend();
         break;
       case 0xD0:
-        Serial.write(statusSend_byte);
-        Serial.write(arg1Send_byte);
+        do1ArgSend();
         break;
       default:
         break;
@@ -187,7 +208,7 @@ void doSend() {
 }
 
 //Get a status byte and set the state depending on it
-void needStatus() {
+static inline void needStatus() {
   if (midi_state == midi_needStatus) {
     if (Serial.available() > 0) {
       status_byte = Serial.read();
@@ -207,7 +228,7 @@ void needStatus() {
           midi_state = midi_1Args;
           break;
         default:
-          Serial.write(status_byte); //No idea what it is
+          Serial.write(status_byte); //No idea what it is. F0 and any byte without high bit set
           break;
       }
     }
@@ -215,7 +236,7 @@ void needStatus() {
 }
 
 //Get second to last arg before send
-void need2Args() {
+static inline void need2Args() {
   if (midi_state == midi_2Args) {
     if (Serial.available() > 0) {
       arg2_byte = Serial.read();
@@ -226,7 +247,7 @@ void need2Args() {
 }
 
 //Get the last arg before we must send
-void need1Args() {
+static inline void need1Args() {
   if (midi_state == midi_1Args) {
     if (Serial.available() > 0) {
       arg1_byte = Serial.read();
