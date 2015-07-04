@@ -18,7 +18,7 @@
     - add a footswitch such that:
       - foot comes up, this pedal just passes MIDI.  there is no octave switching
       - foot goes down, pedal does auto octave switching.
-      
+
    This MISBEHAVES with more than one channel passing through!
 */
 
@@ -106,11 +106,19 @@ static inline void showLastNoteDown() {
   }
 }
 
+static inline int isNoteOn() {
+  return cmd_byte == 0x90 && arg1_byte != 0;
+}
+
+static inline int isNoteOff() {
+  return (cmd_byte == 0x90 && arg1_byte == 0) || (cmd_byte == 0x80);
+}
+
 static inline void doFilterOnOff() {
   int diff = 0;
   //arg1_byte == 0 for 0x90 is similar to 0x80
-  if (cmd_byte == 0x90 && arg1_byte != 0) {
-    
+  if (isNoteOn()) {
+
     //If there was a previous note down, then compare and possibly shift....
     if (last_noteDown != never_noteDown) {
       diff = (int)arg2_byte - (int)last_noteDown;
@@ -121,54 +129,57 @@ static inline void doFilterOnOff() {
         octave_shift++;
       }
     }
-    
+
     //Record how the note went down, and use that to plug in the note as it comes back up.
     last_noteDown = arg2_byte; //can no longer be never_noteDown
-    
+
     //We can only handle 1 channel and one note down per note!!!
     arg2Send_byte = (byte)(((int)arg2_byte) + octave_shift * 12);
-    
+
     shifted_noteDown[arg2_byte] = arg2Send_byte;
 
-    //Remember enough to handle same note overlaps    
+    //Remember enough to handle same note overlaps
     count_noteDown[arg2Send_byte]++; //Remember that we have an outstanding note that must be turned off.
     vol_noteDown[arg2Send_byte] = arg1Send_byte; //Remember the last volume for this *sent* note. (not the physical key)
-    
+
     //Do the blinky lights
     showLastNoteDown();
   }
-  
-  if (cmd_byte == 0x80 || arg1_byte == 0) {
+
+  if (isNoteOff()) {
     arg2Send_byte = shifted_noteDown[arg2_byte];
-    count_noteDown[arg2_byte]--; //Should never go below zero
+    count_noteDown[arg2Send_byte]--; //Should never go below zero.  Is zero when all of this note is off.
   }
 }
 
+static inline int isDuplicatingNote() {
+  return count_noteDown[arg2Send_byte] > 1;
+}
+
+static inline int isNoteGone() {
+  return count_noteDown[arg2Send_byte] == 0;
+}
 
 static inline void do2ArgSend() {
   ////This is IMPOSSIBLE on a normal keyboard because there are no note overlaps, so expect that synths DO NOT handle overlaps right!
   //turn off notes before retriggering them
-  /*
-  if (cmd_byte == 0x90 && arg1Send_byte != 0) {
-    if (count_noteDown[arg2Send_byte] > 1) {
-      byte arg1Send_bytePre = 0x00;
-      //temporarily turn the note off (just before we turn it on again!)
-      Serial.write(statusSend_byte);
-      Serial.write(arg2Send_byte);
-      Serial.write(arg1Send_bytePre);
-    }
+  if (isNoteOn() && isDuplicatingNote()) {
+    byte arg1Send_bytePre = 0x00;
+    //temporarily turn the note off (just before we turn it on again!)
+    Serial.write(statusSend_byte);
+    Serial.write(arg2Send_byte);
+    Serial.write(arg1Send_bytePre);
   }
-  */
-  
+
   Serial.write(statusSend_byte);
   Serial.write(arg2Send_byte);
   Serial.write(arg1Send_byte);
-  
-  /*
+
+  ///*
   //when undoing a retriggered note, unbury the note underneath it that should be on
-  if ((cmd_byte == 0x90 && arg1Send_byte == 0) || cmd_byte == 0x80) {
+  if (isNoteOff()) {
     //if the count is still 1 or more after doFilterOnOff, then turn the other instance of the note back on.
-    if (count_noteDown[arg2Send_byte] != 0) {
+    if ( ! isNoteGone() ) {
       byte statusSend_bytePost = 0x90 | chan_byte;
       byte arg1Send_bytePost = vol_noteDown[arg2Send_byte];
       Serial.write(statusSend_bytePost);
@@ -176,7 +187,7 @@ static inline void do2ArgSend() {
       Serial.write(arg1Send_bytePost);
     }
   }
-  */
+  //*/
 }
 
 static inline void do1ArgSend() {
