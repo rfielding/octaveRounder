@@ -116,17 +116,26 @@ static inline int isNoteOff() {
 
 static inline void doFilterOnOff() {
   int diff = 0;
+  int shiftedNote = 0;
+  
   //arg1_byte == 0 for 0x90 is similar to 0x80
   if (isNoteOn()) {
 
+    //assume that it is currently in range (it should be)
+    shiftedNote = ((int)arg2_byte)  + octave_shift * 12;
+    
     //If there was a previous note down, then compare and possibly shift....
     if (last_noteDown != never_noteDown) {
-      diff = (int)arg2_byte - (int)last_noteDown;
-      if (diff > 6 && ((int)arg2_byte + (octave_shift - 1) * 12) >= 0) {
+      
+      diff = ((int)arg2_byte) - ((int)last_noteDown);
+      
+      if (diff > 6 && (shiftedNote-12) >= 0) {
         octave_shift--;
-      }
-      if (diff < -6 && ((int)arg2_byte + (octave_shift + 1) * 12) < midi_noteCount) {
+        shiftedNote -= 12;
+      } else
+      if (diff < -6 && (shiftedNote+12) < midi_noteCount) {
         octave_shift++;
+        shiftedNote += 12;
       }
     }
 
@@ -134,7 +143,14 @@ static inline void doFilterOnOff() {
     last_noteDown = arg2_byte; //can no longer be never_noteDown
 
     //We can only handle 1 channel and one note down per note!!!
-    arg2Send_byte = ((byte)((((int)arg2_byte) + octave_shift * 12) % midi_noteCount)) & 0x7F;
+    while(shiftedNote > midi_noteCount) {
+      shiftedNote -= 12;
+    }
+    while(shiftedNote < 0) {
+      shiftedNote += 12;
+    }
+    
+    arg2Send_byte = ((byte)shiftedNote) & 0x7F; //Should be impossible to be out of range, but I have experienced wraparound.
     
     shifted_noteDown[arg2_byte] = arg2Send_byte;
 
