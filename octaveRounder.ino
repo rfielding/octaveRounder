@@ -60,6 +60,8 @@ byte vol_noteDown[midi_noteCount];
 byte shifted_noteDown[midi_noteCount];
 
 
+const int blinky = 12;
+const int toggle = 10;
 
 /*
   Call this to reset the state machine.  That means that all variables *must* be set here.
@@ -80,10 +82,10 @@ void resetMidi() {
   last_noteDown = never_noteDown;
   octave_shift = 0;
 
-  for (int i = 0; i < 12; i++) {
-    pinMode( i + 2, OUTPUT );
-    digitalWrite( i + 2, LOW );
-  }
+  pinMode(blinky, OUTPUT);
+  digitalWrite(blinky, HIGH);
+
+  pinMode(toggle, INPUT);
 
   midi_state = midi_needStatus;
   for (int i = 0; i < midi_noteCount; i++) {
@@ -99,13 +101,6 @@ void setup() {
   resetMidi();
 }
 
-static inline void showLastNoteDown() {
-  byte n = (arg2_byte % 12);
-  for (byte i = 0; i < 12; i++) {
-    digitalWrite( (i + 4) % 12 + 2, n == i);
-  }
-}
-
 static inline int isNoteOn() {
   return cmd_byte == 0x90 && arg1_byte != 0;
 }
@@ -117,49 +112,51 @@ static inline int isNoteOff() {
 static inline void doFilterOnOff() {
   int diff = 0;
   int shiftedNote = 0;
-  
+
   //arg1_byte == 0 for 0x90 is similar to 0x80
   if (isNoteOn()) {
 
     //assume that it is currently in range (it should be)
     shiftedNote = ((int)arg2_byte)  + octave_shift * 12;
-    
+
     //If there was a previous note down, then compare and possibly shift....
-    if (last_noteDown != never_noteDown) {
-      
-      diff = ((int)arg2_byte) - ((int)last_noteDown);
-      
-      if (diff > 6 && (shiftedNote-12) >= 0) {
-        octave_shift--;
-        shiftedNote -= 12;
-      } else
-      if (diff < -6 && (shiftedNote+12) < midi_noteCount) {
-        octave_shift++;
-        shiftedNote += 12;
+    if ( digitalRead(toggle) == LOW ) {
+      if (last_noteDown != never_noteDown) {
+
+        diff = ((int)arg2_byte) - ((int)last_noteDown);
+
+        if (diff > 6 && (shiftedNote - 12) >= 0) {
+          octave_shift--;
+          shiftedNote -= 12;
+        } else if (diff < -6 && (shiftedNote + 12) < midi_noteCount) {
+          octave_shift++;
+          shiftedNote += 12;
+        }
       }
+    } else {
+      //octave_shift = 0;
+      //shiftedNote = ((int)arg2_byte);
     }
 
     //Record how the note went down, and use that to plug in the note as it comes back up.
     last_noteDown = arg2_byte; //can no longer be never_noteDown
 
     //We can only handle 1 channel and one note down per note!!!
-    while(shiftedNote > midi_noteCount) {
+    while (shiftedNote > midi_noteCount) {
       shiftedNote -= 12;
     }
-    while(shiftedNote < 0) {
+    while (shiftedNote < 0) {
       shiftedNote += 12;
     }
-    
+
     arg2Send_byte = ((byte)shiftedNote) & 0x7F; //Should be impossible to be out of range, but I have experienced wraparound.
-    
+
     shifted_noteDown[arg2_byte] = arg2Send_byte;
 
     //Remember enough to handle same note overlaps
     count_noteDown[arg2Send_byte]++; //Remember that we have an outstanding note that must be turned off.
     vol_noteDown[arg2Send_byte] = arg1Send_byte; //Remember the last volume for this *sent* note. (not the physical key)
 
-    //Do the blinky lights
-    showLastNoteDown();
   }
 
   if (isNoteOff()) {
@@ -294,5 +291,8 @@ void loop() {
     need2Args();
     need1Args();
     doSend();
-  } while(Serial.available());
+  } while (Serial.available());
+  //Show light when octave rounding is on
+  digitalWrite(blinky, !digitalRead(toggle));
+  //digitalWrite(blinky, HIGH);
 }
