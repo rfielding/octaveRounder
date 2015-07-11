@@ -289,8 +289,10 @@ static inline void need1Args() {
 
 //Handle reading 1 byte at a time
 void loop() {
-  needStatus();
-  need2Args();
-  need1Args();
-  doSend();
+  do {
+    needStatus();
+    need2Args();
+    need1Args();
+    doSend();
+  } while(Serial.available());
 }
