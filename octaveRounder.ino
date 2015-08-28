@@ -62,7 +62,7 @@ byte shifted_noteDown[midi_noteCount];
 
 byte quarter_noteDown[midi_noteCount];
 
-byte lastWheel;
+int lastWheel;
 
 
 const int quartertoneSplit = 60;
