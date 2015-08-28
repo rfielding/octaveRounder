@@ -131,41 +131,18 @@ static inline void doFilterOnOff() {
     //If there was a previous note down, then compare and possibly shift....
     if ( digitalRead(toggle) == LOW ) {
       if (last_noteDown != never_noteDown) {
-
-        diff = ((int)arg2_byte) - ((int)last_noteDown);
-
-//        if(last_noteDown < quartertoneSplit) {
-          //Move as many octaves as possible to match the top
-          if (diff > 6 && (shiftedNote - 12) >= 0) {
-            //while(diff > 6 && (shiftedNote - 12) >= 0) {
-              octave_shift--;
-              shiftedNote -= 12;
-              diff = ((int)arg2_byte) - ((int)last_noteDown);
-            //}
-          } else if (diff < -6 && (shiftedNote + 12) < midi_noteCount) {
-            //while(diff < -6 && (shiftedNote + 12) < midi_noteCount) {
-              octave_shift++;
-              shiftedNote += 12;
-              diff = ((int)arg2_byte) - ((int)last_noteDown);
-            //}
-          }        
-          /*
+        diff = ((int)arg2_byte) - (int)last_noteDown;
+        while (diff > 6 && (shiftedNote - 12) >= 0) {
+          octave_shift--;
+          shiftedNote -= 12;
+          diff -= 12;
         }
-        else {
-          //Only go one octave out for top half of kb
-          if (diff > 6 && (shiftedNote - 12) >= 0) {
-            octave_shift--;
-            shiftedNote -= 12;
-          } else if (diff < -6 && (shiftedNote + 12) < midi_noteCount) {
-            octave_shift++;
-            shiftedNote += 12;
-          }        
+        while (diff < -6 && (shiftedNote + 12) < midi_noteCount) {
+          octave_shift++;
+          shiftedNote += 12;
+          diff += 12;
         }
-        */
       }
-    } else {
-      //octave_shift = 0;
-      //shiftedNote = ((int)arg2_byte);
     }
 
     //Record how the note went down, and use that to plug in the note as it comes back up.
@@ -182,6 +159,7 @@ static inline void doFilterOnOff() {
     arg2Send_byte = ((byte)shiftedNote) & 0x7F; //Should be impossible to be out of range, but I have experienced wraparound.
 
     shifted_noteDown[arg2_byte] = arg2Send_byte;
+    quarter_noteDown[arg2_byte] = last_noteDown < quartertoneSplit; //Remember if this was a quartertone note
 
     //Remember enough to handle same note overlaps
     count_noteDown[arg2Send_byte]++; //Remember that we have an outstanding note that must be turned off.
@@ -236,8 +214,7 @@ static inline void do2ArgSend() {
   //If we are turning notes on, then add together the bend withe the quartertone adjustment
   if(isNoteOn())
   {
-    quarter_noteDown[arg2Send_byte] = last_noteDown < quartertoneSplit;
-    wheelAdjust(quarter_noteDown[arg2Send_byte]);
+    wheelAdjust(quarter_noteDown[arg2_byte]);
   }
   
   //Send the message (whatever it is)
@@ -257,8 +234,6 @@ static inline void do2ArgSend() {
         //Retrigger the note
         byte statusSend_bytePost = 0x90 | chan_byte;
         byte arg1Send_bytePost = vol_noteDown[arg2Send_byte];
-        //We are definitely retriggering a note, so wheel adjust first
-        wheelAdjust(quarter_noteDown[arg2Send_byte]);
         Serial.write(statusSend_bytePost);
         Serial.write(arg2Send_byte);
         Serial.write(arg1Send_bytePost);
