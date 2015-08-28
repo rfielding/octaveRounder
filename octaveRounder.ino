@@ -51,6 +51,7 @@ byte arg1Send_byte;
 
 byte never_noteDown;
 byte last_noteDown;
+byte last_noteUp;
 int octave_shift;
 //count how many times this note is on for the client.  most synths don't handle note overlap correctly.
 int count_noteDown[midi_noteCount];
@@ -59,7 +60,12 @@ byte vol_noteDown[midi_noteCount];
 //index is the *physical* midi note.  the value is the *sent* midi note.
 byte shifted_noteDown[midi_noteCount];
 
+byte quarter_noteDown[midi_noteCount];
 
+byte lastWheel;
+
+
+const int quartertoneSplit = 60;
 const int blinky = 12;
 const int toggle = 10;
 
@@ -80,8 +86,10 @@ void resetMidi() {
   arg1Send_byte = 0;
   never_noteDown = 255; //Arbitrary impossible MIDI note
   last_noteDown = never_noteDown;
+  last_noteUp = never_noteDown;
   octave_shift = 0;
-
+  lastWheel = 8192;
+  
   pinMode(blinky, OUTPUT);
   digitalWrite(blinky, HIGH);
 
@@ -92,6 +100,7 @@ void resetMidi() {
     shifted_noteDown[i] = i;
     vol_noteDown[i] = 0;
     count_noteDown[i] = 0;
+    quarter_noteDown[i] = 0; //Per note wheel adjustment
   }
 
   //todo: wipe all stuck notes?
@@ -125,13 +134,34 @@ static inline void doFilterOnOff() {
 
         diff = ((int)arg2_byte) - ((int)last_noteDown);
 
-        if (diff > 6 && (shiftedNote - 12) >= 0) {
-          octave_shift--;
-          shiftedNote -= 12;
-        } else if (diff < -6 && (shiftedNote + 12) < midi_noteCount) {
-          octave_shift++;
-          shiftedNote += 12;
+//        if(last_noteDown < quartertoneSplit) {
+          //Move as many octaves as possible to match the top
+          if (diff > 6 && (shiftedNote - 12) >= 0) {
+            //while(diff > 6 && (shiftedNote - 12) >= 0) {
+              octave_shift--;
+              shiftedNote -= 12;
+              diff = ((int)arg2_byte) - ((int)last_noteDown);
+            //}
+          } else if (diff < -6 && (shiftedNote + 12) < midi_noteCount) {
+            //while(diff < -6 && (shiftedNote + 12) < midi_noteCount) {
+              octave_shift++;
+              shiftedNote += 12;
+              diff = ((int)arg2_byte) - ((int)last_noteDown);
+            //}
+          }        
+          /*
         }
+        else {
+          //Only go one octave out for top half of kb
+          if (diff > 6 && (shiftedNote - 12) >= 0) {
+            octave_shift--;
+            shiftedNote -= 12;
+          } else if (diff < -6 && (shiftedNote + 12) < midi_noteCount) {
+            octave_shift++;
+            shiftedNote += 12;
+          }        
+        }
+        */
       }
     } else {
       //octave_shift = 0;
@@ -162,6 +192,7 @@ static inline void doFilterOnOff() {
   if (isNoteOff()) {
     arg2Send_byte = shifted_noteDown[arg2_byte];
     count_noteDown[arg2Send_byte]--; //Should never go below zero.  Is zero when all of this note is off.
+    last_noteUp = arg2_byte;
   }
 }
 
@@ -173,9 +204,19 @@ static inline int isNoteGone() {
   return count_noteDown[arg2Send_byte] == 0;
 }
 
+static inline void wheelAdjust(int isQuarterTone)
+{
+  int adjustment = 8192;
+  if(isQuarterTone)
+  {
+    adjustment -= 8192/4;
+  }
+  Serial.write(0xE0 | chan_byte);
+  Serial.write(adjustment % 128);
+  Serial.write(adjustment / 128);
+}
+
 static inline void do2ArgSend() {
-  ////This is IMPOSSIBLE on a normal keyboard because there are no note overlaps, so expect that synths DO NOT handle overlaps right!
-  //turn off notes before retriggering them
   if (isNoteOn() && isDuplicatingNote()) {
     byte arg1Send_bytePre = 0x00;
     //temporarily turn the note off (just before we turn it on again!)
@@ -184,6 +225,22 @@ static inline void do2ArgSend() {
     Serial.write(arg1Send_bytePre);
   }
 
+  //If we are bending, then remember what we last bent to.
+  int isBendingNote = cmd_byte==0xE0;
+  if(isBendingNote)
+  {
+    //Remember the bend from incoming pitch wheel
+    lastWheel = arg2Send_byte + arg1Send_byte*128;
+  }
+  
+  //If we are turning notes on, then add together the bend withe the quartertone adjustment
+  if(isNoteOn())
+  {
+    quarter_noteDown[arg2Send_byte] = last_noteDown < quartertoneSplit;
+    wheelAdjust(quarter_noteDown[arg2Send_byte]);
+  }
+  
+  //Send the message (whatever it is)
   Serial.write(statusSend_byte);
   Serial.write(arg2Send_byte);
   Serial.write(arg1Send_byte);
@@ -192,12 +249,16 @@ static inline void do2ArgSend() {
   if (isNoteOff()) {
     //if the count is still 1 or more after doFilterOnOff, then turn the other instance of the note back on.
     if ( ! isNoteGone() ) {
+      //Something is really wrong
       if ( count_noteDown[arg2Send_byte] > 10 || count_noteDown[arg2Send_byte] < 0) {
         //panic!!!!
         resetMidi();
       } else {
+        //Retrigger the note
         byte statusSend_bytePost = 0x90 | chan_byte;
         byte arg1Send_bytePost = vol_noteDown[arg2Send_byte];
+        //We are definitely retriggering a note, so wheel adjust first
+        wheelAdjust(quarter_noteDown[arg2Send_byte]);
         Serial.write(statusSend_bytePost);
         Serial.write(arg2Send_byte);
         Serial.write(arg1Send_bytePost);
