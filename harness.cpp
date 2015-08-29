@@ -46,6 +46,10 @@ public:
 
 	void write(byte b)
 	{
+		if(b & 0x80)
+		{
+			printf("\n");
+		}
 		printf("!%02x ", b);
 	}
 
@@ -54,6 +58,10 @@ public:
 		if( available() )
 		{
 			index++;
+			if(buffer[index-1] & 0x80)
+			{
+				printf("\n");
+			}
 			printf("?%02x ", buffer[index-1]);
 			return buffer[index-1];
 
@@ -64,7 +72,7 @@ public:
 
 	bool available()
 	{
-		return ( index <= bufferCount );
+		return ( index < bufferCount );
 	}
 } Serial;
 

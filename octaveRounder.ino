@@ -72,8 +72,6 @@ int lastWheel;
 
 
 const int quartertoneSplit = 60;
-const int blinky = 12;
-const int toggle = 10;
 
 /*
   Call this to reset the state machine.  That means that all variables *must* be set here.
@@ -96,11 +94,6 @@ void resetMidi() {
   octave_shift = 0;
   lastWheel = 8192;
   
-  pinMode(blinky, OUTPUT);
-  digitalWrite(blinky, HIGH);
-
-  pinMode(toggle, INPUT);
-
   midi_state = midi_needStatus;
   for (int i = 0; i < midi_noteCount; i++) {
     shifted_noteDown[i] = i;
@@ -133,19 +126,17 @@ static inline void doFilterOnOff() {
     shiftedNote = ((int)arg2_byte)  + octave_shift * 12;
 
     //If there was a previous note down, then compare and possibly shift....
-    if ( digitalRead(toggle) == LOW ) {
-      if (last_noteDown != never_noteDown) {
-        diff = ((int)arg2_byte) - (int)last_noteDown;
-        while (diff > 6 && (shiftedNote - 12) >= 0) {
-          octave_shift--;
-          shiftedNote -= 12;
-          diff -= 12;
-        }
-        while (diff < -6 && (shiftedNote + 12) < midi_noteCount) {
-          octave_shift++;
-          shiftedNote += 12;
-          diff += 12;
-        }
+    if (last_noteDown != never_noteDown) {
+      diff = ((int)arg2_byte) - (int)last_noteDown;
+      while (diff > 6 && (shiftedNote - 12) >= 0) {
+        octave_shift--;
+        shiftedNote -= 12;
+        diff -= 12;
+      }
+      while (diff < -6 && (shiftedNote + 12) < midi_noteCount) {
+        octave_shift++;
+        shiftedNote += 12;
+        diff += 12;
       }
     }
 
@@ -333,6 +324,4 @@ void loop() {
     doSend();
   } while (Serial.available());
   //Show light when octave rounding is on
-  digitalWrite(blinky, !digitalRead(toggle));
-  //digitalWrite(blinky, HIGH);
 }
