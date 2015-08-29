@@ -112,11 +112,25 @@ bool digitalRead(int num)
 #include "octaveRounder.ino"
 
 
-const byte test1data[12] = {
-  0x90, 0x61, 0x7f,
+const byte test1data[] = {
+  0x90, 0x31, 0x7f,
+  0xE0, 0x05, 0x40,
   0x90, 0x63, 0x7f,
-  0x90, 0x61, 0x00,
-  0x90, 0x63, 0x00
+  0x90, 0x63, 0x00,
+  0x90, 0x63, 0x7f,
+  0x90, 0x63, 0x00,
+  0x80, 0x31, 0x64,
+};
+
+const byte test2data[] = {
+  0x90, 0x40, 0x7F,
+  0x90, 0x40, 0x00,
+  0x90, 0x43, 0x7F,
+  0x90, 0x43, 0x00,
+  0x90, 0x47, 0x7F,
+  0x90, 0x47, 0x00,
+  0x90, 0x40, 0x7F,
+  0x90, 0x40, 0x00,
 };
 
 int runTest(const byte* data, size_t size, size_t iterations);
@@ -124,14 +138,17 @@ int runTest(const byte* data, size_t size, size_t iterations);
 /**
     Some Unit tests
  */
-int runTest(const byte* data, size_t size, size_t iterations)
-{
+int runTest(const byte* data, size_t size, size_t iterations) {
 	Serial.dataSet(data, size);
 	setup();
-	for(int i=0; i<iterations; i++)
-	{
+	for(int i=0; i<iterations; i++) {
 		loop();
 	}
+	int totalVolume = 0;
+	for(int i=0; i<midi_note_count; i++) {
+		totalVolume += notes[i].sent_vol;
+	}
+	printf("finalVolume:%d\n", totalVolume);
 	return 0;
 }
 
@@ -141,7 +158,8 @@ int runTest(const byte* data, size_t size, size_t iterations)
  */
 int main(int argc, char** argv, char** envp)
 {
-	runTest( test1data, 12, 100);
+	runTest( test2data, sizeof(test2data), 100);
+	runTest( test1data, sizeof(test1data), 100);
 	return 0;
 }
 
