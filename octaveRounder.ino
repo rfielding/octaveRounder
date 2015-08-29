@@ -46,6 +46,7 @@ void setup() {
   pitch_wheel_in = pitch_wheel_centered;
   pitch_wheel_sent = pitch_wheel_centered;
   pitch_wheel_adjust = 0;
+  note_adjust = 0;
   for(int i=0; i<midi_note_count; i++) {
     notes[i].id = 0;
     notes[i].sent_note = 0;
@@ -100,22 +101,35 @@ static void quartertone_adjust(byte n) {
   }
 }
 
+static byte oct_rounding() {
+    byte nSend = cmd_args[0]+note_adjust;
+    if(cmd_last != cmd_last_never) {
+      int diff = cmd_args[0] - cmd_last;
+      if(diff > 6) {
+        nSend -= 12*(1 + diff/12);
+        note_adjust -= 12*(1 + diff/12);
+      } 
+      if(diff < -6) {
+        nSend += 12*(1 + diff/12);
+        note_adjust += 12*(1 + diff/12);
+      } 
+    }
+    while(nSend < 0) {
+      nSend += 12;
+      note_adjust += 12;
+    }
+    while(nSend >= midi_note_count) {
+      nSend -= 12;
+      note_adjust -= 12;
+    }
+    return nSend;
+}
+
 static void note_message() {
   byte n = cmd_args[0];
   byte v = cmd_args[1];
   if(v > 0) {
-    byte nSend = cmd_args[0]+note_adjust;
-    if(cmd_last != cmd_last_never) {
-      int diff = n - cmd_last;
-      if(diff > 6) {
-        nSend -= 12;
-        note_adjust -= 12;
-      } 
-      if(diff < -6) {
-        nSend += 12;
-        note_adjust += 12;
-      } 
-    }
+    byte nSend = oct_rounding();
     cmd_id++;
     notes[n].id = cmd_id;
     notes[n].sent_note = nSend;
