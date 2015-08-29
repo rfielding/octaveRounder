@@ -22,6 +22,12 @@
    This MISBEHAVES with more than one channel passing through!
 */
 
+/**
+  This is ONLY in the C++ test harness!
+ */
+#ifndef logit
+  #define logit(msg,...)
+#endif
 
 enum MidiState {
   midi_needStatus,
@@ -102,8 +108,6 @@ void resetMidi() {
     count_noteDown[i] = 0;
     quarter_noteDown[i] = 0; //Per note wheel adjustment
   }
-
-  //todo: wipe all stuck notes?
 }
 
 void setup() {

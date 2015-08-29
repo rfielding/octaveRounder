@@ -1,2 +1,2 @@
 harness:	harness.cpp octaveRounder.ino
-	gcc -o harness harness.cpp
+	gcc -std=c++11 -o harness harness.cpp
