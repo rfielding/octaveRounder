@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 //Define a logging mechanism that is used both in the actual code, and in the test harness
-#define logit(msg) printf(msg)
+#define logit(msg,...) printf(msg,__VA_ARGS__)
 
 /**
 
@@ -66,7 +66,7 @@ public:
 			return buffer[index-1];
 
 		}
-		logit("!!blocked on read!!\n");
+		logit("!!blocked on read!! %d\n", index);
 		return 0;
 	}
 
@@ -155,6 +155,17 @@ const byte test4data[] = {
   0x90, 0x3c, 0x00, 
 };
 
+const byte test5data[] = {
+  0x90, 0x3c, 0x6f,
+  0x90, 0x48, 0x60,
+  0x90, 0x48, 0x00,
+  0x90, 0x48, 0x7f,
+  0x90, 0x48, 0x00,
+  0x90, 0x48, 0x73,
+  0x90, 0x48, 0x00,
+  0x90, 0x3c, 0x00,
+};
+
 int runTest(const byte* data, size_t size, size_t iterations);
 
 /**
@@ -184,6 +195,7 @@ int main(int argc, char** argv, char** envp)
 	runTest( test2data, sizeof(test2data), 100);
 	runTest( test1data, sizeof(test1data), 100);
 	runTest( test4data, sizeof(test4data), 100);
+	runTest( test5data, sizeof(test5data), 100);
 	return 0;
 }
 

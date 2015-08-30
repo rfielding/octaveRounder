@@ -94,6 +94,12 @@ static void pitch_wheel_xmit() {
   }
 }
 
+static void note_message_re_xmit(int n, int v) {
+  Serial.write( cmd_state | cmd_channel );
+  Serial.write( n );
+  Serial.write( v );
+}
+
 static void note_message_xmit() {
   Serial.write( cmd_state | cmd_channel );
   Serial.write( notes[cmd_args[0]].sent_note );
@@ -157,6 +163,7 @@ static void note_message() {
     note_message_xmit();
     cmd_last = cmd_args[0];
   } else {
+    int old_vol = notes[n].sent_vol;
     notes[n].sent_vol = 0;
     note_message_xmit();
     //Find the leader, and set the pitch wheel back to his setting
@@ -164,13 +171,17 @@ static void note_message() {
     byte lead_idx = n;
     for(byte i=0; i<midi_note_count; i++) {
       byte relative_id = notes[i].id - notes[n].id;
-      if( notes[i].sent_vol > 0 && relative_id > lead_id ) {
+      if( notes[i].sent_vol > 0 && relative_id >= lead_id ) {
         lead_id  = relative_id;
         lead_idx = i;
       }
     }
     quartertone_adjust(lead_idx);
     pitch_wheel_xmit();
+    //If we just unburied the same note, then turn it back on (midi mono won't but should)
+    if( notes[lead_idx].sent_note == notes[n].sent_note) {
+      note_message_re_xmit(n, old_vol); 
+    }
   }
 }
 
