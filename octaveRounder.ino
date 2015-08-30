@@ -26,7 +26,7 @@ int pitch_wheel_adjust = 0;
 int note_adjust = 0;
 
 struct note_state {
-  byte id;
+  int id;
   byte sent_note;
   byte sent_vol;
 } notes[midi_note_count];
@@ -116,14 +116,16 @@ static void quartertone_adjust(byte n) {
 static byte oct_rounding() {
     byte nSend = cmd_args[0]+note_adjust;
     if(cmd_last != cmd_last_never) {
-      int diff = cmd_args[0] - cmd_last;
-      if(diff > 6) {
-        nSend -= 12; //*(1 + diff/12);
-        note_adjust -= 12; //*(1 + diff/12);
+      int diff = (nSend - note_adjust) - cmd_last;
+      while(diff > 6 && nSend >= 12) {
+        nSend -= 12;
+        note_adjust -= 12;
+        diff -= 12;
       } 
-      if(diff < -6) {
-        nSend += 12; //*(1 + diff/12);
-        note_adjust += 12; //*(1 + diff/12);
+      while(diff < -6 && nSend < (128-12-1)) {
+        nSend += 12;
+        note_adjust += 12;
+        diff += 12;
       } 
     }
     while(nSend < 0) {
@@ -169,18 +171,24 @@ static void note_message() {
     //Find the leader, and set the pitch wheel back to his setting
     byte lead_id = 0;
     byte lead_idx = n;
+    int copies = 0;
     for(byte i=0; i<midi_note_count; i++) {
       byte relative_id = notes[i].id - notes[n].id;
-      if( notes[i].sent_vol > 0 && relative_id >= lead_id ) {
-        lead_id  = relative_id;
-        lead_idx = i;
+      if( notes[i].sent_vol > 0 ) {
+        if( notes[i].sent_note == notes[n].sent_note ) {
+          copies++;
+        }
+        if( relative_id >= lead_id ) {
+          lead_id  = relative_id;
+          lead_idx = i;
+        }
       }
     }
     quartertone_adjust(lead_idx);
     pitch_wheel_xmit();
     //If we just unburied the same note, then turn it back on (midi mono won't but should)
-    if( notes[lead_idx].sent_note == notes[n].sent_note) {
-      note_message_re_xmit(n, old_vol); 
+    if( lead_idx != n && notes[n].sent_note == notes[lead_idx].sent_note ) {
+      note_message_re_xmit(notes[n].sent_note, old_vol); 
     }
   }
 }
