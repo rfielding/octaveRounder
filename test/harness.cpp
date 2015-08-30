@@ -106,10 +106,12 @@ bool digitalRead(int num)
 }
 
 /**
-    Include the hardware code
+    Include the hardware code.
+    This odd directory structing is designed to hide this suite from the Arduino toolkit, which will try to use the
+    cpp file.
  */
 
-#include "octaveRounder.ino"
+#include "../octaveRounder.ino"
 
 
 const byte test1data[] = {
