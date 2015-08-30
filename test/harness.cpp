@@ -146,6 +146,15 @@ const byte test3data[] = {
   0x90, 0x40, 0x00,
 };
 
+const byte test4data[] = {
+  0x90, 0x3c, 0x7f, 
+  0x90, 0x32, 0x7f,
+  0x90, 0x3f, 0x7f,
+  0x90, 0x3f, 0x00,
+  0x90, 0x32, 0x00,
+  0x90, 0x3c, 0x00, 
+};
+
 int runTest(const byte* data, size_t size, size_t iterations);
 
 /**
@@ -174,6 +183,7 @@ int main(int argc, char** argv, char** envp)
 	runTest( test3data, sizeof(test3data), 100);
 	runTest( test2data, sizeof(test2data), 100);
 	runTest( test1data, sizeof(test1data), 100);
+	runTest( test4data, sizeof(test4data), 100);
 	return 0;
 }
 

@@ -80,6 +80,12 @@ static void forward_xmit() {
 
 static void pitch_wheel_xmit() {
   int adjusted = pitch_wheel_in + pitch_wheel_adjust;
+  if( adjusted < 0 ) {
+    adjusted = 0;
+  }
+  if( adjusted+1 >= 8192*2 ) {
+    adjusted = 8192*2 - 1;
+  }
   if( adjusted != pitch_wheel_sent ) {
     Serial.write( 0xE0 | cmd_channel );
     Serial.write( adjusted % 128 );
@@ -106,12 +112,12 @@ static byte oct_rounding() {
     if(cmd_last != cmd_last_never) {
       int diff = cmd_args[0] - cmd_last;
       if(diff > 6) {
-        nSend -= 12*(1 + diff/12);
-        note_adjust -= 12*(1 + diff/12);
+        nSend -= 12; //*(1 + diff/12);
+        note_adjust -= 12; //*(1 + diff/12);
       } 
       if(diff < -6) {
-        nSend += 12*(1 + diff/12);
-        note_adjust += 12*(1 + diff/12);
+        nSend += 12; //*(1 + diff/12);
+        note_adjust += 12; //*(1 + diff/12);
       } 
     }
     while(nSend < 0) {
