@@ -10,4 +10,4 @@ In THIS branch, the keyboard is a quartertone flat below middle C, and designed 
 
 See:
 
-[1]: https://www.youtube.com/watch?v=IfWY_6Q8RX4
+https://www.youtube.com/watch?v=IfWY_6Q8RX4
