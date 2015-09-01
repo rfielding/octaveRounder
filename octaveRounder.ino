@@ -1,11 +1,3 @@
-/**
-  This is ONLY in the C++ test harness!
- */
-#ifndef logit
-  #define logit(msg,...)
-#endif
-
-
 const int midi_serial_rate = 31250;
 const int midi_note_count = 128;
 const int byte_queue_length = 16;
@@ -114,7 +106,7 @@ static void quartertone_adjust(byte n) {
 }
 
 static byte oct_rounding() {
-    byte nSend = cmd_args[0]+note_adjust;
+    int nSend = cmd_args[0]+note_adjust;
     if(cmd_last != cmd_last_never) {
       int diff = (nSend - note_adjust) - cmd_last;
       while(diff > 6 && nSend >= 12) {
@@ -136,7 +128,7 @@ static byte oct_rounding() {
       nSend -= 12;
       note_adjust -= 12;
     }
-    return nSend;
+    return (byte)(nSend & 0x7f);
 }
 
 static void note_message() {
@@ -171,13 +163,9 @@ static void note_message() {
     //Find the leader, and set the pitch wheel back to his setting
     byte lead_id = 0;
     byte lead_idx = n;
-    int copies = 0;
     for(byte i=0; i<midi_note_count; i++) {
       byte relative_id = notes[i].id - notes[n].id;
       if( notes[i].sent_vol > 0 ) {
-        if( notes[i].sent_note == notes[n].sent_note ) {
-          copies++;
-        }
         if( relative_id >= lead_id ) {
           lead_id  = relative_id;
           lead_idx = i;
