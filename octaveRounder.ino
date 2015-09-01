@@ -114,7 +114,7 @@ static byte oct_rounding() {
         note_adjust -= 12;
         diff -= 12;
       } 
-      while(diff < -6 && nSend < (128-12-1)) {
+      while(diff < -6 && nSend < (128-12)) {
         nSend += 12;
         note_adjust += 12;
         diff += 12;
