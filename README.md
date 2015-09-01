@@ -49,6 +49,7 @@ The expected behavior of this MIDI filtering pedal can be clearly defined by say
 - turn off notes with a byte 0x90, a note number, but a zero volume byte.  this is what most MIDI devices do in practice.
 - In our notation, green text with a '?' denotes byte input
 - red text with a '!' denotes byte output
+- In MIDI protocol, only the byte that begins a message can have its high bit set.  That includes 0x80,0x90,0xA0,0xB0,0xC0,0xD0,0xE0.  This means that for the second and third bytes of a message, the highest available number is 0x7F (ie: 127 in decimal).
 
 A completely transparent pedal would simply emit exactly the bytes that were put into it.  But our filter will at the very least need to alter the note numbers to match up its internal notion of where its octave switch is at.  A simple downward arpeggiate rewrites the notes, and looks like this:
 
@@ -59,5 +60,12 @@ This is an arpeggio going up (note the 0x0c is 12 in hexadecimal - the number of
 
 ![unittest2](images/unittest2.png)
 
+Now we need to handle the pitch wheel.  Because we drop everything below middle C (note 0x3c) a quartertone, we need to filter the pitch wheel to add our own values to it.  So in this unit test, we simulate nudging the pitch wheel a little bit to make sure that everything is tracking correctly.  Before any note is played, the pitch wheel will need to be moved to be the correct pitch before the note is turned on.  The pitchwheel (ie: note bend) message is 0xE0.  The two bytes after that message are the pitch wheel value.  The first byte is the low 7 bits, and the second byte is the high 7 bits.  Note that this is why MIDI pitch bend has 14 bits of resolution.  We also assume that the pitch wheel is at the default of 2 semitones up or down.
 
+![unittest3](images/unittest3.png)
+![unittest3](images/unittest4.png)
+
+The final behavior that we need to capture is in 'fixing' the standard behavior of MIDI mono synths.  MIDI mono synths track all of the notes that are down and stack them so that hammeron/hammeroff works correctly.  This allows for fast trill playing.  MIDI assumes that there will never be multiple copies of the same note (because it assumes that the controller is a keyboard with a unique key per note).  When using octave rounding, playing adjacent note D's will not be an octave apart, but be the exact same note.  So, when a note must be retriggered for the synth, we need to turn the note off before we turn it back on.  We then need to retrigger notes that have been buried when the key goes up (something that will happen for all other notes except when they are the same note).  This allows for an effect that is like guitar speed picking.
+
+![unittest5](images/unittest5.png) 
 
