@@ -98,16 +98,20 @@ static void note_message_xmit() {
   Serial.write( notes[cmd_args[0]].sent_vol );
 }
 
+static int in_quartertone_zone(byte n) {
+  return n < 60;
+}
+
 static void quartertone_adjust(byte n) {
   pitch_wheel_adjust = 0;
-  if(n < 60) {
+  if(in_quartertone_zone(n)) {
     pitch_wheel_adjust -= 2048;
   }
 }
 
 static byte oct_rounding() {
     int nSend = cmd_args[0]+note_adjust;
-    int fullJump = (cmd_last < 60 || cmd_args[0] < 60);
+    int fullJump = (in_quartertone_zone(cmd_last) != in_quartertone_zone(cmd_args[0]));
     if(cmd_last != cmd_last_never) {
       int diff = (nSend - note_adjust) - cmd_last;
       if(diff > 6 && nSend >= 12) {
