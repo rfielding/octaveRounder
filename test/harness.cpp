@@ -33,7 +33,7 @@ public:
 
 	void dataSet(const byte* data, size_t len)
 	{
-		printf("set data\n");
+		printf("\n");
 		buffer = data;
 		bufferCount = len;
 		index = 0;
@@ -41,7 +41,7 @@ public:
 
 	void begin(int rate)
 	{
-		printf("rate=%d\n", rate);
+		//printf("rate=%d\n", rate);
 	}
 
 	void write(byte b)
@@ -50,7 +50,7 @@ public:
 		{
 			printf("\n");
 		}
-		printf("!%02x ", b);
+		printf("\x1b[31m!%02x \x1b[0m", b);
 	}
 
 	byte read()
@@ -62,11 +62,11 @@ public:
 			{
 				printf("\n");
 			}
-			printf("?%02x ", buffer[index-1]);
+			printf("\x1b[32m?%02x \x1b[0m", buffer[index-1]);
 			return buffer[index-1];
 
 		}
-		logit("!!blocked on read!! %d\n", index);
+		//logit("!!blocked on read!! %d\n", index);
 		return 0;
 	}
 
@@ -181,7 +181,9 @@ int runTest(const byte* data, size_t size, size_t iterations) {
 	for(int i=0; i<midi_note_count; i++) {
 		totalVolume += notes[i].sent_vol;
 	}
-	printf("finalVolume:%d\n", totalVolume);
+	if(totalVolume != 0) {
+		printf("\nfinalVolume:%d\n", totalVolume);
+	}
 	return 0;
 }
 
