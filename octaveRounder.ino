@@ -107,17 +107,22 @@ static void quartertone_adjust(byte n) {
 
 static byte oct_rounding() {
     int nSend = cmd_args[0]+note_adjust;
+    int fullJump = (cmd_last < 60 || cmd_args[0] < 60);
     if(cmd_last != cmd_last_never) {
       int diff = (nSend - note_adjust) - cmd_last;
-      while(diff > 6 && nSend >= 12) {
-        nSend -= 12;
-        note_adjust -= 12;
-        diff -= 12;
+      if(diff > 6 && nSend >= 12) {
+        do {
+          nSend -= 12;
+          note_adjust -= 12;
+          diff -= 12;
+        }while(diff > 6 && nSend >= 12 && fullJump);
       } 
-      while(diff < -6 && nSend < (128-12)) {
-        nSend += 12;
-        note_adjust += 12;
-        diff += 12;
+      if(diff < -6 && nSend < (128-12)) {
+        do {
+          nSend += 12;
+          note_adjust += 12;
+          diff += 12;
+        }while(diff < -6 && nSend < (128-12) && fullJump);
       } 
     }
     while(nSend < 0) {
