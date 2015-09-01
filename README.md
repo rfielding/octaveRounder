@@ -12,6 +12,10 @@ Demonstration Video:
 
 https://www.youtube.com/watch?v=IfWY_6Q8RX4
 
+Tutorial on using the quartertone split:
+
+https://www.youtube.com/watch?v=vimtrlz7cGs&feature=autoshare
+
 To build one, install the Arduino SDK:
 
 http://www.arduino.cc
