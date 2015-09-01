@@ -53,10 +53,10 @@ static int cmd_arg_count(byte c) {
     case 0x80:
     case 0xA0:
     case 0xB0:
-    case 0xC0:
     case 0xE0:
       return 2;
     case 0xD0:
+    case 0xC0:
       return 1;
     case 0xF0:
       return 0;
@@ -202,19 +202,23 @@ static void handle_message() {
       pitch_wheel_in = cmd_args[0] + 128*cmd_args[1];
       pitch_wheel_xmit();
       break;  
-    case 0xA0:
-    case 0xB0:
-    case 0xC0:
-    case 0xD0:
-      forward_xmit();
-      break;  
-    case 0xF0:
+    default:
       forward_xmit();
       break;  
   }
 }
 
 void byte_enqueue(byte b) {
+  //Pass 0xF0 messages literally and immediately.
+  if((b & 0xF0) == 0xF0) {
+    cmd_state = 0xF0;
+    Serial.write(b);
+    return;
+  }
+  if((b & 0x80)==0 && cmd_state == 0xF0) {
+    Serial.write(b);
+    return;
+  }
   if(b & 0x80) {
     cmd_state   = (b & 0xF0);
     cmd_channel = (b & 0x0F);
