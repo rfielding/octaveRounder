@@ -22,7 +22,8 @@ Buy an Arduino Uno, easily available from electronics stores for as low as $5:
 
 Buy a MIDI shield for roughly $20.  You typically need to buy them online.  I find them on Amazon (Olimex, LinkSprite).  You only need MIDI IN and OUT for these purposes (you can buy a partial MIDI shield that doesn't have a MIDI THRU, with only IN and OUT if you like):
 
-![MIDI Shield](midishield.jpg)
+![LinkSprite MIDI Shield](midishield.jpg)
+![Olimex MIDI Shield](midishield2.jpg)
 
 Stack them together.  Be very careful to align the pins correctly before plugging into USB (ie: the power source), or you can damage the board.  Then use the Arduino SDK to upload octaveRounder.ino into the Arduino boardi over the USB.
 
