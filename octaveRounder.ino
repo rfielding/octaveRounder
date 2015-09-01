@@ -111,6 +111,7 @@ static void quartertone_adjust(byte n) {
 
 static byte oct_rounding() {
     int nSend = cmd_args[0]+note_adjust;
+    //Might need a switch so that fullJump is always true.  
     int fullJump = (in_quartertone_zone(cmd_last) != in_quartertone_zone(cmd_args[0]));
     if(cmd_last != cmd_last_never) {
       int diff = (nSend - note_adjust) - cmd_last;
