@@ -1,5 +1,7 @@
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+
 //Define a logging mechanism that is used both in the actual code, and in the test harness
 #define logit(msg,...) printf(msg,__VA_ARGS__)
 
@@ -15,20 +17,28 @@ typedef unsigned char byte;
 #define false 0
 
 const size_t SerialDeviceBufferSize = 4096;
+const size_t SerialDeviceResultSize = 4096;
 
 //Some totally generic serial device
 class SerialDevice
 {
+public:
 	const byte* buffer;
 	size_t bufferCount;
 	size_t index;
-public:
+	byte result[SerialDeviceResultSize];
+	size_t result_index;
 	//Start with an empty buffer
 	SerialDevice()
 	{
 		index = 0;
 		buffer = NULL;
 		bufferCount = 0;
+		result_index = 0;
+		for(int i=0; i<SerialDeviceResultSize; i++)
+		{
+			result[i] = 0;
+		}
 	}
 
 	void dataSet(const byte* data, size_t len)
@@ -37,6 +47,7 @@ public:
 		buffer = data;
 		bufferCount = len;
 		index = 0;
+		result_index = 0;
 	}
 
 	void begin(int rate)
@@ -51,6 +62,9 @@ public:
 			printf("\n");
 		}
 		printf("\x1b[31m!%02x \x1b[0m", b);
+		assert(result_index < SerialDeviceResultSize);
+		result[result_index] = b;
+		result_index++;
 	}
 
 	byte read()
@@ -66,7 +80,7 @@ public:
 			return buffer[index-1];
 
 		}
-		//logit("!!blocked on read!! %d\n", index);
+		assert("reading while blocked" && 0);
 		return 0;
 	}
 
@@ -113,71 +127,18 @@ bool digitalRead(int num)
 
 #include "../octaveRounder.ino"
 
-
-const byte test1data[] = {
-  0x90, 0x31, 0x7f,
-  0xE0, 0x05, 0x40,
-  0x90, 0x63, 0x7f,
-  0x90, 0x63, 0x00,
-  0x90, 0x63, 0x7f,
-  0x90, 0x63, 0x00,
-  0x80, 0x31, 0x64,
-};
-
-const byte test2data[] = {
-  0x90, 0x40, 0x7F,
-  0x90, 0x40, 0x00,
-  0x90, 0x43, 0x7F,
-  0x90, 0x43, 0x00,
-  0x90, 0x47, 0x7F,
-  0x90, 0x47, 0x00,
-  0x90, 0x40, 0x7F,
-  0x90, 0x40, 0x00,
-};
-
-const byte test3data[] = {
-  0x90, 0x40, 0x7F,
-  0x90, 0x40, 0x00,
-  0x90, 0x47, 0x7F,
-  0x90, 0x47, 0x00,
-  0x90, 0x43, 0x7F,
-  0x90, 0x43, 0x00,
-  0x90, 0x40, 0x7F,
-  0x90, 0x40, 0x00,
-};
-
-const byte test4data[] = {
-  0x90, 0x3c, 0x7f, 
-  0x90, 0x32, 0x7f,
-  0x90, 0x3f, 0x7f,
-  0x90, 0x3f, 0x00,
-  0x90, 0x32, 0x00,
-  0x90, 0x3c, 0x00, 
-};
-
-const byte test5data[] = {
-  0x90, 0x3c, 0x6f,
-  0x90, 0x48, 0x60,
-  0x90, 0x48, 0x00,
-  0x90, 0x48, 0x7f,
-  0x90, 0x48, 0x00,
-  0x90, 0x48, 0x73,
-  0x90, 0x48, 0x00,
-  0x90, 0x3c, 0x00,
-};
-
-const byte test6data[] = {
-  0x90, 0x3c, 0x66,
-  0xF8, 0xF8, 0xF8, 0xF8,
-  0x90, 0x3c, 0x00,
-};
-
-int runTest(const byte* data, size_t size, size_t iterations);
+#define RUNTEST(nm) runTest( nm##in, sizeof(nm##in), nm##out, sizeof(nm##out), 100) 
+#include "data/test1.h"
+#include "data/test2.h"
+#include "data/test3.h"
+#include "data/test4.h"
+#include "data/test5.h"
+#include "data/test6.h"
 
 /**
     Some Unit tests
  */
-int runTest(const byte* data, size_t size, size_t iterations) {
+int runTest(const byte* data, size_t size, const byte* result, size_t result_size, size_t iterations) {
 	Serial.dataSet(data, size);
 	setup();
 	for(int i=0; i<iterations; i++) {
@@ -188,8 +149,16 @@ int runTest(const byte* data, size_t size, size_t iterations) {
 		totalVolume += notes[i].sent_vol;
 	}
 	if(totalVolume != 0) {
-		printf("\nfinalVolume:%d\n", totalVolume);
+		printf("stuck note!\n");
+		exit(-1);
 	}
+	for(int i=0; i<result_size-1; i++) {
+		if(result[i] != Serial.result[i]) {
+			printf("byte %d is wrong!\n", i);
+			exit(-1);
+		}
+	}
+	//TODO: check against expected result - mock needs to track data result
 	return 0;
 }
 
@@ -199,12 +168,12 @@ int runTest(const byte* data, size_t size, size_t iterations) {
  */
 int main(int argc, char** argv, char** envp)
 {
-	runTest( test3data, sizeof(test3data), 100);
-	runTest( test2data, sizeof(test2data), 100);
-	runTest( test1data, sizeof(test1data), 100);
-	runTest( test4data, sizeof(test4data), 100);
-	runTest( test5data, sizeof(test5data), 100);
-	runTest( test6data, sizeof(test6data), 100);
+	RUNTEST(test1);
+	RUNTEST(test2);
+	RUNTEST(test3);
+	RUNTEST(test4);
+	RUNTEST(test5);
+	RUNTEST(test6);
 	return 0;
 }
 
