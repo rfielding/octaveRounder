@@ -216,7 +216,7 @@ static void handle_controls() {
     rpn_msb_data = cmd_args[1];
     if( rpn_msb == 0 ) {
       //TODO: we assume that the pitch wheel is centered when we get this message
-      pitch_wheel_semis = rpn_msb_data;
+//TODO: only commit when working on ultranova      pitch_wheel_semis = rpn_msb_data;
     }
   }
 }
