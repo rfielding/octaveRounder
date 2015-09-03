@@ -3,6 +3,9 @@ const int midi_note_count = 128;
 const int byte_queue_length = 16;
 const int pitch_wheel_centered = 8192;
 const byte cmd_last_never = 255;
+const int split_point = 60;
+const int oct_notes = 12;
+const int ceiling7bit = 128;
 
 byte cmd_channel = 0;
 byte cmd_state = 0;
@@ -11,10 +14,14 @@ byte cmd_needs = 0;
 byte cmd_has = 0;
 byte cmd_id = 0;
 byte cmd_last = cmd_last_never;
-
+byte rpn_lsb = 0;
+byte rpn_msb = 0;
+byte rpn_msb_data = 0;
+ 
 int pitch_wheel_in = pitch_wheel_centered;
 int pitch_wheel_sent = pitch_wheel_centered;
 int pitch_wheel_adjust = 0;
+int pitch_wheel_semis = 2;
 int note_adjust = 0;
 
 struct note_state {
@@ -38,7 +45,11 @@ void setup() {
   pitch_wheel_in = pitch_wheel_centered;
   pitch_wheel_sent = pitch_wheel_centered;
   pitch_wheel_adjust = 0;
+  pitch_wheel_semis = 2;
   note_adjust = 0;
+  rpn_lsb = 0;
+  rpn_msb = 0;
+  rpn_msb_data = 0;
   for(int i=0; i<midi_note_count; i++) {
     notes[i].id = 0;
     notes[i].sent_note = 0;
@@ -49,21 +60,22 @@ void setup() {
 
 static int cmd_arg_count(byte c) {
   switch(c) {
-    case 0x90:
-    case 0x80:
-    case 0xA0:
-    case 0xB0:
-    case 0xE0:
+    case 0x90: //note on
+    case 0x80: //note off
+    case 0xA0: //aftertouch
+    case 0xB0: //control parm
+    case 0xE0: //bend 2 semitones default
       return 2;
-    case 0xD0:
-    case 0xC0:
+    case 0xD0: //channel pressure ... like channel global aftertouch
+    case 0xC0: //program change
       return 1;
-    case 0xF0:
-      return 0;
+    default:
+      return -1;
   }
 }
 
 static void forward_xmit() {
+  //TODO: if we get program change, or pitch bend sensitivity, we should have responded
   Serial.write( cmd_state | cmd_channel );
   for(int i=0; i<cmd_has; i++) {
     Serial.write( cmd_args[i] );
@@ -75,13 +87,13 @@ static void pitch_wheel_xmit() {
   if( adjusted < 0 ) {
     adjusted = 0;
   }
-  if( adjusted+1 >= 8192*2 ) {
-    adjusted = 8192*2 - 1;
+  if( adjusted+1 >= pitch_wheel_centered*2 ) {
+    adjusted = pitch_wheel_centered*2 - 1;
   }
   if( adjusted != pitch_wheel_sent ) {
     Serial.write( 0xE0 | cmd_channel );
-    Serial.write( adjusted % 128 );
-    Serial.write( adjusted / 128 );
+    Serial.write( adjusted % ceiling7bit );
+    Serial.write( adjusted / ceiling7bit );
     pitch_wheel_sent = adjusted;
   }
 }
@@ -99,13 +111,13 @@ static void note_message_xmit() {
 }
 
 static int in_quartertone_zone(byte n) {
-  return n < 60;
+  return n < split_point;
 }
 
 static void quartertone_adjust(byte n) {
   pitch_wheel_adjust = 0;
   if(in_quartertone_zone(n)) {
-    pitch_wheel_adjust -= 2048;
+    pitch_wheel_adjust -= (pitch_wheel_centered/(2*pitch_wheel_semis));
   }
 }
 
@@ -113,32 +125,33 @@ static byte oct_rounding() {
     int nSend = cmd_args[0]+note_adjust;
     //Might need a switch so that fullJump is always true.  
     int fullJump = (in_quartertone_zone(cmd_last) != in_quartertone_zone(cmd_args[0]));
+    //TODO: can all of the while loops be dispensed with for a constant-time calculation?
     if(cmd_last != cmd_last_never) {
       int diff = (nSend - note_adjust) - cmd_last;
-      if(diff > 6 && nSend >= 12) {
+      if(diff > oct_notes/2 && nSend >= oct_notes) {
         do {
-          nSend -= 12;
-          note_adjust -= 12;
-          diff -= 12;
-        }while(diff > 6 && nSend >= 12 && fullJump);
+          nSend -= oct_notes;
+          note_adjust -= oct_notes;
+          diff -= oct_notes;
+        }while(diff > oct_notes/2 && nSend >= oct_notes && fullJump);
       } 
-      if(diff < -6 && nSend < (128-12)) {
+      if(diff < -oct_notes/2 && nSend < (midi_note_count-oct_notes)) {
         do {
-          nSend += 12;
-          note_adjust += 12;
-          diff += 12;
-        }while(diff < -6 && nSend < (128-12) && fullJump);
+          nSend += oct_notes;
+          note_adjust += oct_notes;
+          diff += oct_notes;
+        }while(diff < -oct_notes/2 && nSend < (midi_note_count-oct_notes) && fullJump);
       } 
     }
     while(nSend < 0) {
-      nSend += 12;
-      note_adjust += 12;
+      nSend += oct_notes;
+      note_adjust += oct_notes;
     }
     while(nSend >= midi_note_count) {
-      nSend -= 12;
-      note_adjust -= 12;
+      nSend -= oct_notes;
+      note_adjust -= oct_notes;
     }
-    return (byte)(nSend & 0x7f);
+    return (byte)(nSend & 0x7f); //should not need to mask if all is right!
 }
 
 static void note_message() {
@@ -191,6 +204,23 @@ static void note_message() {
   }
 }
 
+//As relevant control info passes through, sync with it if we have to
+static void handle_controls() {
+  if( cmd_args[0] == 64 ) {
+    rpn_lsb = cmd_args[1];
+  }
+  if( cmd_args[0] == 65 ) {
+    rpn_msb = cmd_args[1];
+  }  
+  if( cmd_args[0] == 6 ) {
+    rpn_msb_data = cmd_args[1];
+    if( rpn_msb == 0 ) {
+      //TODO: we assume that the pitch wheel is centered when we get this message
+      pitch_wheel_semis = rpn_msb_data;
+    }
+  }
+}
+
 static void handle_message() {
   switch(cmd_state) {
     case 0x80:
@@ -200,8 +230,12 @@ static void handle_message() {
       note_message();
       break;
     case 0xE0:
-      pitch_wheel_in = cmd_args[0] + 128*cmd_args[1];
+      pitch_wheel_in = cmd_args[0] + ceiling7bit*cmd_args[1];
       pitch_wheel_xmit();
+      break;
+    case 0xB0:
+      handle_controls();
+      forward_xmit();
       break;  
     default:
       forward_xmit();
@@ -209,7 +243,7 @@ static void handle_message() {
   }
 }
 
-void byte_enqueue(byte b) {
+static void byte_enqueue(byte b) {
   //Pass 0xF0 messages literally and immediately.
   if((b & 0xF0) == 0xF0) {
     cmd_state = 0xF0;
@@ -220,6 +254,7 @@ void byte_enqueue(byte b) {
     Serial.write(b);
     return;
   }
+
   if(b & 0x80) {
     cmd_state   = (b & 0xF0);
     cmd_channel = (b & 0x0F);
@@ -238,6 +273,7 @@ void byte_enqueue(byte b) {
   }
 }
 
+//No calls to available or read should happen elsewhere
 void loop() {
   while(Serial.available()) {
     byte_enqueue(Serial.read());

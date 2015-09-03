@@ -136,6 +136,7 @@ bool digitalRead(int num)
 #include "data/test4.h"
 #include "data/test5.h"
 #include "data/test6.h"
+#include "data/test7.h"
 
 /**
     Some Unit tests
@@ -165,7 +166,7 @@ int runTest(const byte* data, size_t size, const byte* result, size_t result_siz
 	//Do a basic expectation test (assumes deterministic tests right now)
 	for(int i=0; i<result_size; i++) {
 		if(result[i] != Serial.result[i]) {
-			printf("byte %d is wrong!\n", i);
+			printf("byte %d is wrong. Expected value %02x!\n", i, result[i]);
 			exit(-1);
 		}
 	}
@@ -185,6 +186,8 @@ int main(int argc, char** argv, char** envp)
 	RUNTEST(test4);
 	RUNTEST(test5);
 	RUNTEST(test6);
+	RUNTEST(test7);
+	printf("\n");
 	return 0;
 }
 
