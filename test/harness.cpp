@@ -28,8 +28,9 @@ public:
 	size_t index;
 	byte result[SerialDeviceResultSize];
 	size_t result_index;
+
 	//Start with an empty buffer
-	SerialDevice()
+	void init()
 	{
 		index = 0;
 		buffer = NULL;
@@ -43,6 +44,7 @@ public:
 
 	void dataSet(const byte* data, size_t len)
 	{
+		init();
 		printf("\n");
 		buffer = data;
 		bufferCount = len;
@@ -139,11 +141,19 @@ bool digitalRead(int num)
     Some Unit tests
  */
 int runTest(const byte* data, size_t size, const byte* result, size_t result_size, size_t iterations) {
+	//Randomize the memory of the harness
+	char* serialPtr = (char*)&Serial;
+	for(int i=0; i<sizeof(Serial); i++) {
+		serialPtr[i] = rand();
+	}
+	//Set the data set
 	Serial.dataSet(data, size);
+	//Run it
 	setup();
 	for(int i=0; i<iterations; i++) {
 		loop();
 	}
+	//Check for stuck notes
 	int totalVolume = 0;
 	for(int i=0; i<midi_note_count; i++) {
 		totalVolume += notes[i].sent_vol;
@@ -152,7 +162,8 @@ int runTest(const byte* data, size_t size, const byte* result, size_t result_siz
 		printf("stuck note!\n");
 		exit(-1);
 	}
-	for(int i=0; i<result_size-1; i++) {
+	//Do a basic expectation test (assumes deterministic tests right now)
+	for(int i=0; i<result_size; i++) {
 		if(result[i] != Serial.result[i]) {
 			printf("byte %d is wrong!\n", i);
 			exit(-1);
