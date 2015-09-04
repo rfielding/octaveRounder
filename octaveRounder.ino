@@ -154,26 +154,51 @@ static byte oct_rounding() {
     return (byte)(nSend & 0x7f); //should not need to mask if all is right!
 }
 
-static void note_message() {
-  byte n = cmd_args[0];
-  byte v = cmd_args[1];
-  if(v > 0) {
-    byte nSend = oct_rounding();
-    cmd_id++;
-    notes[n].id = cmd_id;
-    notes[n].sent_note = nSend;
-    notes[n].sent_vol = cmd_args[1];
+static void find_leader(byte* ptr_lead_id, byte* ptr_lead_idx) {
+    byte n = cmd_args[0];
+    for(byte i=0; i<midi_note_count; i++) {
+      byte relative_id = notes[i].id - notes[n].id;
+      if( notes[i].sent_vol > 0 ) {
+        if( relative_id >= *ptr_lead_id ) {
+          *ptr_lead_id  = relative_id;
+          *ptr_lead_idx = i;
+        }
+      }
+    }
+}
+
+static int count_copies(byte n2) {
     int copies = 0;
-    byte n2 = notes[n].sent_note;
     for(int i=0; i<midi_note_count; i++) {
       if( notes[i].sent_note == n2 ) {
         copies++;
       }
     }
-    if(copies > 1) {
+    return copies;
+}
+
+static void note_turnoff() {
       Serial.write( cmd_state | cmd_channel );
-      Serial.write( n2 );
+      Serial.write( notes[cmd_args[0]].sent_note );
       Serial.write( 0 );
+}
+
+static void note_message() {
+  const byte n = cmd_args[0];
+  const byte v = cmd_args[1];
+  byte lead_id = 0;
+  byte lead_idx = n;
+  if(v > 0) {
+    const byte nSend = oct_rounding();
+    find_leader(&lead_id, &lead_idx);
+    cmd_id++;
+    notes[n].id = cmd_id;
+    notes[n].sent_note = nSend;
+    notes[n].sent_vol = cmd_args[1];
+    byte n2 = notes[n].sent_note;
+    int copies = count_copies(n2);
+    if(copies > 1) {
+      note_turnoff();
     }
     quartertone_adjust(n);
     pitch_wheel_xmit();
@@ -182,23 +207,16 @@ static void note_message() {
   } else {
     int old_vol = notes[n].sent_vol;
     notes[n].sent_vol = 0;
-    note_message_xmit();
+    note_turnoff();
     //Find the leader, and set the pitch wheel back to his setting
-    byte lead_id = 0;
-    byte lead_idx = n;
-    for(byte i=0; i<midi_note_count; i++) {
-      byte relative_id = notes[i].id - notes[n].id;
-      if( notes[i].sent_vol > 0 ) {
-        if( relative_id >= lead_id ) {
-          lead_id  = relative_id;
-          lead_idx = i;
-        }
-      }
-    }
-    quartertone_adjust(lead_idx);
-    pitch_wheel_xmit();
+    find_leader(&lead_id, &lead_idx);
+    int unbury_same = lead_idx != n && notes[n].sent_note == notes[lead_idx].sent_note;
+    //if( !unbury_same ) {
+      quartertone_adjust(lead_idx);
+      pitch_wheel_xmit();
+    //}
     //If we just unburied the same note, then turn it back on (midi mono won't but should)
-    if( lead_idx != n && notes[n].sent_note == notes[lead_idx].sent_note ) {
+    if( unbury_same ) {
       note_message_re_xmit(notes[n].sent_note, old_vol); 
     }
   }
@@ -216,7 +234,7 @@ static void handle_controls() {
     rpn_msb_data = cmd_args[1];
     if( rpn_msb == 0 ) {
       //TODO: we assume that the pitch wheel is centered when we get this message
-//TODO: only commit when working on ultranova      pitch_wheel_semis = rpn_msb_data;
+      //pitch_wheel_semis = rpn_msb_data;
     }
   }
 }
