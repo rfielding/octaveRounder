@@ -25,7 +25,7 @@ int pitch_wheel_semis = 2;
 int note_adjust = 0;
 
 struct note_state {
-  int id;
+  byte id;
   byte sent_note;
   byte sent_vol;
 } notes[midi_note_count];
@@ -151,30 +151,31 @@ static byte oct_rounding() {
       nSend -= oct_notes;
       note_adjust -= oct_notes;
     }
-    return (byte)(nSend & 0x7f); //should not need to mask if all is right!
+    return (byte)nSend;
 }
 
-static void find_leader(byte* ptr_lead_id, byte* ptr_lead_idx) {
+#define LEQ(a,b) ((a) <= (b))
+
+static void find_leader(byte* ptr_lead_idx, int* ptr_lead_same) {
     byte n = cmd_args[0];
+    int lead_id = 0;
+    int notes_on = 0;
     for(byte i=0; i<midi_note_count; i++) {
-      byte relative_id = notes[i].id - notes[n].id;
       if( notes[i].sent_vol > 0 ) {
-        if( relative_id >= *ptr_lead_id ) {
-          *ptr_lead_id  = relative_id;
+        notes_on++;
+        if( LEQ(lead_id, notes[i].id) ) {
+          lead_id  = notes[i].id;
           *ptr_lead_idx = i;
         }
       }
     }
-}
-
-static int count_copies(byte n2) {
-    int copies = 0;
-    for(int i=0; i<midi_note_count; i++) {
-      if( notes[i].sent_note == n2 ) {
-        copies++;
+    if(notes_on == 0) {
+      for(byte i=0; i<midi_note_count; i++) {
+        notes[i].id = 0;
+        cmd_id = 0;
       }
     }
-    return copies;
+    *ptr_lead_same = (*ptr_lead_idx != n && notes[n].sent_note == notes[*ptr_lead_idx].sent_note);
 }
 
 static void note_turnoff() {
@@ -186,37 +187,37 @@ static void note_turnoff() {
 static void note_message() {
   const byte n = cmd_args[0];
   const byte v = cmd_args[1];
-  byte lead_id = 0;
   byte lead_idx = n;
+  int lead_same = 0;
   if(v > 0) {
     const byte nSend = oct_rounding();
-    find_leader(&lead_id, &lead_idx);
+    find_leader(&lead_idx, &lead_same);
     cmd_id++;
-    notes[n].id = cmd_id;
+    notes[n].id = cmd_id; //overwrites existing if it's still on
     notes[n].sent_note = nSend;
     notes[n].sent_vol = cmd_args[1];
-    byte n2 = notes[n].sent_note;
-    int copies = count_copies(n2);
-    if(copies > 1) {
-      note_turnoff();
+    if(lead_same) {
+      note_turnoff(); //Done so that total on and off for a note always end up as 0
+    } 
+    if(1 || !lead_same) {
+      quartertone_adjust(n);
+      pitch_wheel_xmit();
     }
-    quartertone_adjust(n);
-    pitch_wheel_xmit();
     note_message_xmit();
     cmd_last = cmd_args[0];
   } else {
     int old_vol = notes[n].sent_vol;
     notes[n].sent_vol = 0;
+    notes[n].id = 0;
     note_turnoff();
     //Find the leader, and set the pitch wheel back to his setting
-    find_leader(&lead_id, &lead_idx);
-    int unbury_same = lead_idx != n && notes[n].sent_note == notes[lead_idx].sent_note;
-    //if( !unbury_same ) {
+    find_leader(&lead_idx, &lead_same);
+    if(1 || !lead_same) {
       quartertone_adjust(lead_idx);
       pitch_wheel_xmit();
-    //}
+    }
     //If we just unburied the same note, then turn it back on (midi mono won't but should)
-    if( unbury_same ) {
+    if(lead_same) {
       note_message_re_xmit(notes[n].sent_note, old_vol); 
     }
   }
