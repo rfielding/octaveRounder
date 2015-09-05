@@ -32,6 +32,13 @@ struct note_state {
   byte sent_vol;
 } notes[midi_note_count];
 
+void pinSetup() {
+  for(int i=0; i<oct_notes; i++) {
+    pinMode(i+2, OUTPUT);
+    digitalWrite(i+2, LOW);    
+  }
+}
+
 /**
   Reset all mutable state, because test harness needs to clean up
  */
@@ -59,6 +66,7 @@ void setup() {
     notes[i].sent_vol = 0;
   }
   Serial.begin(midi_serial_rate);
+  //pinSetup(); !! DO NOT INCLUDE THIS IF BOARD USES ANY DIGITAL PINS 2-13 FOR READ
 }
 
 static int cmd_arg_count(const byte c) {
@@ -323,9 +331,24 @@ static void byte_enqueue(byte b) {
   }
 }
 
+byte ledStates[oct_notes];
+
+static void blinkys() {
+  for(int i=0; i<oct_notes; i++) {
+    ledStates[i] = LOW;
+  }
+  for(int i=0; i<midi_note_count; i++) {
+    ledStates[i%12] |= (notes[i].sent_vol > 0);
+  }
+  for(int i=0; i<oct_notes; i++) {
+    digitalWrite(i+2, ledStates[i]);
+  }
+}
+
 //No calls to available or read should happen elsewhere
 void loop() {
   while (Serial.available()) {
     byte_enqueue(Serial.read());
   }
+  //blinkys(); !!DO NOT INCLUDE THIS FUNCTION IF ANY DIGITAL PINS 2-13 ARE WIRED FOR READ, AS A PEDAL WITH A FOOTSWITCH WOULD BE.  IT CAN SHORT THE BOARD!!
 }
