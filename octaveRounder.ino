@@ -17,6 +17,7 @@ byte cmd_last = cmd_last_never;
 byte rpn_lsb = 0x7F;
 byte rpn_msb = 0x7F;
 byte rpn_msb_data = 0;
+byte rpn_lsb_data = 0;
  
 int pitch_wheel_in = pitch_wheel_centered;
 int pitch_wheel_sent = pitch_wheel_centered;
@@ -50,6 +51,7 @@ void setup() {
   rpn_lsb = 0x7F;
   rpn_msb = 0x7F;
   rpn_msb_data = 0;
+  rpn_lsb_data = 0;
   for(int i=0; i<midi_note_count; i++) {
     notes[i].id = 0;
     notes[i].sent_note = 0;
@@ -154,8 +156,6 @@ static byte oct_rounding() {
     return (byte)nSend;
 }
 
-#define LEQ(a,b) ((a) <= (b))
-
 static void find_leader(byte* ptr_lead_idx, int* ptr_lead_same) {
     byte n = cmd_args[0];
     int lead_id = 0;
@@ -163,7 +163,7 @@ static void find_leader(byte* ptr_lead_idx, int* ptr_lead_same) {
     for(byte i=0; i<midi_note_count; i++) {
       if( notes[i].sent_vol > 0 ) {
         notes_on++;
-        if( LEQ(lead_id, notes[i].id) ) {
+        if( lead_id <= notes[i].id ) {
           lead_id  = notes[i].id;
           *ptr_lead_idx = i;
         }
@@ -247,6 +247,13 @@ static void handle_controls() {
     if( rpn_msb == 0 ) {
       //TODO: we assume that the pitch wheel is centered when we get this message
       //pitch_wheel_semis = rpn_msb_data;
+    }
+  }
+  if( cmd_args[0] == 0x26 ) {
+    rpn_lsb_data = cmd_args[1];
+    if( rpn_lsb == 0 ) {
+      //TODO: not even going to bother with cents until semis work
+      //pitch_wheel_cents = rpn_lsb_data;
     }
   }
 }
