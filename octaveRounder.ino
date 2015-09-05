@@ -60,7 +60,7 @@ void setup() {
   Serial.begin(midi_serial_rate);
 }
 
-static int cmd_arg_count(byte c) {
+static int cmd_arg_count(const byte c) {
   switch(c) {
     case 0x90: //note on
     case 0x80: //note off
@@ -100,7 +100,7 @@ static void pitch_wheel_xmit() {
   }
 }
 
-static void note_message_re_xmit(int n, int v) {
+static void note_message_re_xmit(const int n, const int v) {
   Serial.write( cmd_state | cmd_channel );
   Serial.write( n );
   Serial.write( v );
@@ -112,11 +112,11 @@ static void note_message_xmit() {
   Serial.write( notes[cmd_args[0]].sent_vol );
 }
 
-static int in_quartertone_zone(byte n) {
+static int in_quartertone_zone(const byte n) {
   return n < split_point;
 }
 
-static void quartertone_adjust(byte n) {
+static void quartertone_adjust(const byte n) {
   pitch_wheel_adjust = 0;
   if(in_quartertone_zone(n)) {
     pitch_wheel_adjust -= (pitch_wheel_centered/(2*pitch_wheel_semis));
@@ -126,7 +126,7 @@ static void quartertone_adjust(byte n) {
 static byte oct_rounding() {
     int nSend = cmd_args[0]+note_adjust;
     //Might need a switch so that fullJump is always true.  
-    int fullJump = (in_quartertone_zone(cmd_last) != in_quartertone_zone(cmd_args[0]));
+    const int fullJump = (in_quartertone_zone(cmd_last) != in_quartertone_zone(cmd_args[0]));
     //TODO: can all of the while loops be dispensed with for a constant-time calculation?
     if(cmd_last != cmd_last_never) {
       int diff = (nSend - note_adjust) - cmd_last;
@@ -157,7 +157,7 @@ static byte oct_rounding() {
 }
 
 static void find_leader(byte* ptr_lead_idx, int* ptr_lead_same) {
-    byte n = cmd_args[0];
+    const byte n = cmd_args[0];
     int lead_id = 0;
     int notes_on = 0;
     for(byte i=0; i<midi_note_count; i++) {
@@ -208,7 +208,7 @@ static void note_message() {
     notes[n].id = cmd_id; //overwrites existing if it's still on
     notes[n].sent_note = nSend; //!overwritten so that lead_same is different when recomputed now!
     notes[n].sent_vol = cmd_args[1];
-    int count = count_duplicates();
+    const int count = count_duplicates();
     if(lead_same || count > 1) {
       note_turnoff(); //Done so that total on and off for a note always end up as 0
     } 
@@ -219,7 +219,7 @@ static void note_message() {
     note_message_xmit();
     cmd_last = cmd_args[0];
   } else {
-    int old_vol = notes[n].sent_vol;
+    const int old_vol = notes[n].sent_vol;
     notes[n].sent_vol = 0;
     notes[n].id = 0;
     note_turnoff();
