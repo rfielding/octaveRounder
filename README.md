@@ -69,6 +69,10 @@ The main point of quartertone scales is to have a pentatonic core scale, where a
 
 ![qtone](images/qtone_cropped.png)
 
+And trilling works by holding down same note and playing notes in same octave, to double playing speed.
+
+![trill](images/trill_cropped.png)
+
 #How It Works
 
 The expected behavior of this MIDI filtering pedal can be clearly defined by saying what bytes we expect to come out of the pedal in response to certain bytes going in.  To simplify things, assume that we are going to work with MIDI channel 1 only.  We will talk entirely in terms of hexadecimal numbers when speaking of the protocol.  That means that MIDI:
