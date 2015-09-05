@@ -14,8 +14,8 @@ byte cmd_needs = 0;
 byte cmd_has = 0;
 byte cmd_id = 0;
 byte cmd_last = cmd_last_never;
-byte rpn_lsb = 0;
-byte rpn_msb = 0;
+byte rpn_lsb = 0x7F;
+byte rpn_msb = 0x7F;
 byte rpn_msb_data = 0;
  
 int pitch_wheel_in = pitch_wheel_centered;
@@ -47,8 +47,8 @@ void setup() {
   pitch_wheel_adjust = 0;
   pitch_wheel_semis = 2;
   note_adjust = 0;
-  rpn_lsb = 0;
-  rpn_msb = 0;
+  rpn_lsb = 0x7F;
+  rpn_msb = 0x7F;
   rpn_msb_data = 0;
   for(int i=0; i<midi_note_count; i++) {
     notes[i].id = 0;
