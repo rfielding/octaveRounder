@@ -175,7 +175,7 @@ static void find_leader(byte* ptr_lead_idx, int* ptr_lead_same) {
         cmd_id = 0;
       }
     }
-    *ptr_lead_same = (*ptr_lead_idx != n && notes[n].sent_note == notes[*ptr_lead_idx].sent_note);
+    *ptr_lead_same = ((*ptr_lead_idx != n) && (notes[n].sent_note == notes[*ptr_lead_idx].sent_note));
 }
 
 static void note_turnoff() {
@@ -189,7 +189,6 @@ static void note_message() {
   const byte v = cmd_args[1];
   byte lead_idx = n;
   int lead_same = 0;
-  const int qtrill_disable = 1; //I want this to be zero at some point, so I can reuse quartertone notes to trill non-quartertone notes.  Still something wrong with it though.
   if(v > 0) {
     const byte nSend = oct_rounding();
     find_leader(&lead_idx, &lead_same);
@@ -200,7 +199,7 @@ static void note_message() {
     if(lead_same) {
       note_turnoff(); //Done so that total on and off for a note always end up as 0
     } 
-    if(qtrill_disable || !lead_same) {
+    if(n==lead_idx || notes[n].sent_note != notes[lead_idx].sent_note) {
       quartertone_adjust(n);
       pitch_wheel_xmit();
     }
@@ -213,10 +212,8 @@ static void note_message() {
     note_turnoff();
     //Find the leader, and set the pitch wheel back to his setting
     find_leader(&lead_idx, &lead_same);
-    if(qtrill_disable || !lead_same) {
-      quartertone_adjust(lead_idx);
-      pitch_wheel_xmit();
-    }
+    quartertone_adjust(lead_idx);
+    pitch_wheel_xmit();
     //If we just unburied the same note, then turn it back on (midi mono won't but should)
     if(lead_same) {
       note_message_re_xmit(notes[n].sent_note, old_vol); 
