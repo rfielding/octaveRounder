@@ -1,0 +1,41 @@
+digraph {
+  size="8,6"
+  rankdir=LR
+  midi_shield [label="MIDI shield" shape=rectangle fillcolor="lightblue" style=filled];
+  midi_shield_in [label="IN" shape=circle fillcolor="lightblue" style=filled];
+  midi_shield_out [label="OUT" shape=circle fillcolor="lightblue" style=filled];
+  arduino_uno [label="Arduino:\nrunning octaveRounder.ino" shape=rectangle fillcolor=yellow style=filled];
+  ultranova [label="Novation UltraNova:\nGlobal -> LocalKeys -> Off\nOscillator -> [All 3 Voices] -> PitchWheelSemis -> 2" shape=rectangle fillcolor=red style=filled];
+  ultranova_in [label="IN" shape=circle fillcolor=red style=filled];
+  ultranova_out [label="OUT" shape=circle fillcolor=red style=filled];
+  pc [label="Computer:\nInstall Arduino SDK\nSet Arduino Type\nSet COM port\nUpload octaveRounder\\octaveRounder.ino" shape=rectangle fillcolor=green style=filled]
+  arduino_uno_usb [label="USB" shape=circle fillcolor=yellow style=filled]
+  pc_usb [label="USB" shape=circle fillcolor=green style=filled]
+
+  midi_cable_black [label="MIDI Cable" shape=rectangle fillcolor=gray style=filled]
+  midi_cable_red [label="MIDI Cable" shape=rectangle fillcolor=gray style=filled]
+  usb_cable [label="USB Cable" shape=rectangle fillcolor=gray style=filled]
+  arduino_uno_headers [label="pins" shape=circle fillcolor=yellow style=filled]
+
+  midi_shield_in -> midi_shield
+  midi_shield_out -> midi_shield
+
+  ultranova_out -> ultranova
+  ultranova_in -> ultranova
+
+  arduino_uno_usb -> arduino_uno
+  arduino_uno_headers -> arduino_uno
+
+  pc_usb -> pc
+
+  //Plug it all in
+  midi_shield -> arduino_uno_headers [style=dotted]
+
+  usb_cable -> pc_usb [style=dotted]
+  usb_cable -> arduino_uno_usb [style=dotted]
+
+  midi_cable_black -> midi_shield_in [style=dotted]
+  midi_cable_black -> ultranova_out [style=dotted]
+  midi_cable_red -> midi_shield_out [style=dotted]
+  midi_cable_red -> ultranova_in [style=dotted]
+}
