@@ -1,3 +1,5 @@
+const char* test5name = "trill";
+
 const byte test5in[] = {
   0x90, 0x3c, 0x6f,
   0x90, 0x48, 0x60,

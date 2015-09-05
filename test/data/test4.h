@@ -1,3 +1,5 @@
+const char* test4name = "quartertone bend boundary";
+
 const byte test4in[] = {
   0x90, 0x3c, 0x7f, 
   0x90, 0x32, 0x7f,

@@ -1,3 +1,5 @@
+const char* test1name = "overlapped notes";
+
 const byte test1in[] = {
   0x90, 0x31, 0x7f,
   0xE0, 0x05, 0x40,

@@ -1,3 +1,5 @@
+const char* test3name = "arpeggiate down";
+
 const byte test3in[] = {
   0x90, 0x40, 0x7F,
   0x90, 0x40, 0x00,

@@ -129,7 +129,7 @@ bool digitalRead(int num)
 
 #include "../octaveRounder.ino"
 
-#define RUNTEST(nm) runTest( nm##in, sizeof(nm##in), nm##out, sizeof(nm##out), 100) 
+#define RUNTEST(nm) runTest( nm##name, nm##in, sizeof(nm##in), nm##out, sizeof(nm##out), 100) 
 #include "data/test1.h"
 #include "data/test2.h"
 #include "data/test3.h"
@@ -141,7 +141,9 @@ bool digitalRead(int num)
 /**
     Some Unit tests
  */
-int runTest(const byte* data, size_t size, const byte* result, size_t result_size, size_t iterations) {
+int runTest(const char* name, const byte* data, size_t size, const byte* result, size_t result_size, size_t iterations) {
+	printf("\n\ntest: %s\n", name);
+
 	//Randomize the memory of the harness
 	char* serialPtr = (char*)&Serial;
 	for(int i=0; i<sizeof(Serial); i++) {

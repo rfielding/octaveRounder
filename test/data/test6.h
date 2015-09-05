@@ -1,3 +1,5 @@
+const char* test6name = "clock ticks passthrough";
+
 const byte test6in[] = {
   0x90, 0x3c, 0x66,
   0xF8, 0xF8, 0xF8, 0xF8,

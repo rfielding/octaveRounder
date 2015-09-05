@@ -1,3 +1,5 @@
+const char* test7name = "pitch wheel sensitivity";
+
 const byte test7in[] = {
   0xB0, 0x64, 0x00,
         0x65, 0x00,
