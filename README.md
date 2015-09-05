@@ -12,13 +12,12 @@ It only plays notes you actually play, but octave switches to the nearest note t
 
 The keyboard is a quartertone flat below middle C, and designed exclusively for playing mono voices.
 
-Demonstration Video:
-
+Demonstration Video (Not a trained or proficient pianist at all):
 
 
 [![Screenshot](https://i.ytimg.com/vi_webp/IfWY_6Q8RX4/hqdefault.webp)](https://www.youtube.com/watch?v=IfWY_6Q8RX4)
 
-Tutorial on using the quartertone split:
+Tutorial video on using the quartertone split:
 
 https://www.youtube.com/watch?v=vimtrlz7cGs&feature=autoshare
 
