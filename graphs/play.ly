@@ -26,6 +26,7 @@ result = \new PianoStaff {
 }
 
 \relative c' {
+  \time 6/8
   \arpdr
 }
 \result
