@@ -78,10 +78,10 @@ static int cmd_arg_count(const byte c) {
 }
 
 static void status_xmit(byte cmd, byte channel) {
-  //TODO: if we get program change, or pitch bend sensitivity, we should have responded
-  if(cmd == 0xB0 && running_status == cmd) {
+  if (cmd == 0xB0 && running_status == cmd) {
     //Do running status on these messages, because it's very common to expect it.
   } else {
+    //Technically, everything could be running status, but there seems to be a lot of devices that don't handle it correctly.
     Serial.write( cmd | channel );
   }
   running_status = cmd;
