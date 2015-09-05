@@ -40,16 +40,22 @@ As always with MIDI, make sure that the keyboard is set to transmit MIDI out (us
 
 ![Novation UltraNova](images/ultranova.jpg)
 
+These are two of the prototypes.  One in a red plastic box has a dozen LEDs representing the current note down.
+The other is the raw prototyping board for uploading code on a daily basis.  
+Some of these have used Arduino Mega 2560, but these just use Arduino Uno.
+The Uno only has a very small 2k of RAM available, so the code needs to be very tight on memory.
+
+![Prototypes](images/twoprototypes.jpg)
 
 #How It Works
 
 The expected behavior of this MIDI filtering pedal can be clearly defined by saying what bytes we expect to come out of the pedal in response to certain bytes going in.  To simplify things, assume that we are going to work with MIDI channel 1 only.  We will talk entirely in terms of hexadecimal numbers when speaking of the protocol.  That means that MIDI:
 
-- turn on notes with a byte 0x90, a note number byte, then a volume byte
-- turn off notes with a byte 0x80, note number byte, and a parameter for how hard to turn it off.  this is a rarely used options.
-- turn off notes with a byte 0x90, a note number, but a zero volume byte.  this is what most MIDI devices do in practice.
+- Turn on notes with a byte 0x90, a note number byte, then a volume byte
+- Turn off notes with a byte 0x80, note number byte, and a parameter for how hard to turn it off.  This is a rarely used option.
+- Turn off notes with a byte 0x90, a note number, but a zero volume byte.  This is what most MIDI devices do in practice.
 - In our notation, green text with a '?' denotes byte input
-- red text with a '!' denotes byte output
+- Ted text with a '!' denotes byte output
 - In MIDI protocol, only the byte that begins a message can have its high bit set.  That includes 0x80,0x90,0xA0,0xB0,0xC0,0xD0,0xE0.  This means that for the second and third bytes of a message, the highest available number is 0x7F (ie: 127 in decimal).
 
 A completely transparent pedal would simply emit exactly the bytes that were put into it.  But our filter will at the very least need to alter the note numbers to match up its internal notion of where its octave switch is at.  A simple downward arpeggiate rewrites the notes, and looks like this:
