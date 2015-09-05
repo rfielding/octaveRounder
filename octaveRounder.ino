@@ -236,17 +236,17 @@ static void note_message() {
 
 //As relevant control info passes through, sync with it if we have to
 static void handle_controls() {
-  if( cmd_args[0] == 64 ) {
+  if( cmd_args[0] == 0x64 ) {
     rpn_lsb = cmd_args[1];
   }
-  if( cmd_args[0] == 65 ) {
+  if( cmd_args[0] == 0x65 ) {
     rpn_msb = cmd_args[1];
   }  
-  if( cmd_args[0] == 6 ) {
+  if( cmd_args[0] == 0x06 ) {
     rpn_msb_data = cmd_args[1];
     if( rpn_msb == 0 ) {
       //TODO: we assume that the pitch wheel is centered when we get this message
-      //pitch_wheel_semis = rpn_msb_data;
+      pitch_wheel_semis = rpn_msb_data;
     }
   }
 }
