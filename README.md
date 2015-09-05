@@ -53,6 +53,14 @@ Note that you can make a minimal (and not optically isolated!) MIDI shield with 
 but that may not be more hazardous than you would like for the MIDI device that this is to be plugged into.
 ![Inventory](images/wiring1.png)
 
+#What it does
+
+At a basic level, it is doing automated octave shifting. Musically, it is manipulating a virtual octave switch.
+It makes a tremendous difference when octave switching is automated, because the rhythm needs to be right when
+moving hands long distance or when hitting octave switches.
+
+![play](images/play_cropped.png)
+
 #How It Works
 
 The expected behavior of this MIDI filtering pedal can be clearly defined by saying what bytes we expect to come out of the pedal in response to certain bytes going in.  To simplify things, assume that we are going to work with MIDI channel 1 only.  We will talk entirely in terms of hexadecimal numbers when speaking of the protocol.  That means that MIDI:
@@ -61,7 +69,7 @@ The expected behavior of this MIDI filtering pedal can be clearly defined by say
 - Turn off notes with a byte 0x80, note number byte, and a parameter for how hard to turn it off.  This is a rarely used option.
 - Turn off notes with a byte 0x90, a note number, but a zero volume byte.  This is what most MIDI devices do in practice.
 - In our notation, green text with a '?' denotes byte input
-- Ted text with a '!' denotes byte output
+- Text with a '!' denotes byte output
 - In MIDI protocol, only the byte that begins a message can have its high bit set.  That includes 0x80,0x90,0xA0,0xB0,0xC0,0xD0,0xE0.  This means that for the second and third bytes of a message, the highest available number is 0x7F (ie: 127 in decimal).
 
 A completely transparent pedal would simply emit exactly the bytes that were put into it.  But our filter will at the very least need to alter the note numbers to match up its internal notion of where its octave switch is at.  A simple downward arpeggiate rewrites the notes, and looks like this:
