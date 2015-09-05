@@ -267,6 +267,9 @@ static void byte_enqueue(byte b) {
   if((b & 0xF0) == 0xF0) {
     cmd_state = 0xF0;
     Serial.write(b);
+    if(b == 0xFF) {
+      setup(); //Let's reset if we see a MIDI reset going by.
+    }
     return;
   }
   if((b & 0x80)==0 && cmd_state == 0xF0) {
