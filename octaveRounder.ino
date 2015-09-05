@@ -194,7 +194,7 @@ static void note_message() {
     find_leader(&lead_idx, &lead_same);
     cmd_id++;
     notes[n].id = cmd_id; //overwrites existing if it's still on
-    notes[n].sent_note = nSend;
+    notes[n].sent_note = nSend; //!overwritten so that lead_same is different when recomputed now!
     notes[n].sent_vol = cmd_args[1];
     if(lead_same) {
       note_turnoff(); //Done so that total on and off for a note always end up as 0
