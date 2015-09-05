@@ -14,7 +14,9 @@ The keyboard is a quartertone flat below middle C, and designed exclusively for 
 
 Demonstration Video:
 
-https://www.youtube.com/watch?v=IfWY_6Q8RX4
+
+
+[![Screenshot](https://i.ytimg.com/vi_webp/IfWY_6Q8RX4/hqdefault.webp)](https://www.youtube.com/watch?v=IfWY_6Q8RX4)
 
 Tutorial on using the quartertone split:
 
