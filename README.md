@@ -61,6 +61,14 @@ moving hands long distance or when hitting octave switches.
 
 ![play](images/play_cropped.png)
 
+The keyboard is virtually split at middle C.  Everything below middle C is a quartertone flat.
+This means that when you hit a key on the low side, the pitch wheel goes down an extra half of a note (1/4 tone).
+When you play a note on the other side, the adjustment is removed.
+So, left hand plays the quartertone notes or normal notes; while right hand stays to the right of middle C.
+The main point of quartertone scales is to have a pentatonic core scale, where all minor thirds can be split exactly in half with a 1/4 tone.
+
+![qtone](images/qtone_cropped.png)
+
 #How It Works
 
 The expected behavior of this MIDI filtering pedal can be clearly defined by saying what bytes we expect to come out of the pedal in response to certain bytes going in.  To simplify things, assume that we are going to work with MIDI channel 1 only.  We will talk entirely in terms of hexadecimal numbers when speaking of the protocol.  That means that MIDI:
