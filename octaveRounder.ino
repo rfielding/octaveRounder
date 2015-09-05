@@ -184,6 +184,18 @@ static void note_turnoff() {
       Serial.write( 0 );
 }
 
+static int count_duplicates() {
+  int count = 0;
+  const byte n = cmd_args[0];
+  const byte nSend = notes[n].sent_note;
+  for(byte i=0; i<midi_note_count; i++) {
+    if(notes[i].sent_note == nSend && notes[i].sent_vol > 0) {
+      count++;
+    }
+  }
+  return count;
+}
+
 static void note_message() {
   const byte n = cmd_args[0];
   const byte v = cmd_args[1];
@@ -196,7 +208,8 @@ static void note_message() {
     notes[n].id = cmd_id; //overwrites existing if it's still on
     notes[n].sent_note = nSend; //!overwritten so that lead_same is different when recomputed now!
     notes[n].sent_vol = cmd_args[1];
-    if(lead_same) {
+    int count = count_duplicates();
+    if(lead_same || count > 1) {
       note_turnoff(); //Done so that total on and off for a note always end up as 0
     } 
     if(n==lead_idx || notes[n].sent_note != notes[lead_idx].sent_note) {
