@@ -35,12 +35,18 @@ Buy a MIDI shield for roughly $20.  You typically need to buy them online.  I fi
 ![Olimex MIDI Shield](images/midishield2.jpg)
 
 Stack them together.  Be very careful to align the pins correctly before plugging into USB (ie: the power source), or you can damage the board.  Then use the Arduino SDK to upload [octaveRounder.ino](octaveRounder.ino) into the Arduino boardi over the USB (press the 'Raw' button to get a downloadable link in your browser that you can right click to save-as).
+  
+    > Note that in order to load programs, the MIDI shield usually needs to be disabled with a switch/jumper during the program upload phase.
+    > This is because the same serial pins that drive MIDI are affected during program upload.
+    > Your synth can also sometimes get into a strange state while being programmed.
 
-As always with MIDI, make sure that the keyboard is set to transmit MIDI out (usually on channel 1).  Then MIDI OUT from that keys controller into the MIDI IN of the MIDI Shield, and MIDI OUT from the Shield into the MIDI IN of the synth.  If your MIDI keys controller has a disable local keys option, use that.  If you can disable local keys, you can use the same device for keys controller and synth.  You will need 2 MIDI DIN cables, or at least will need the 5-pin DIN on the end that plugs into the Arduino.  A third cable for MIDI THRU will not be necessary for this pedal, because we don't use the clock signals in this program (ie: like arpeggiators do).
+
+As always with MIDI, make sure that the keyboard is set to transmit MIDI out (usually on channel 1).  Then MIDI OUT from that keys controller into the MIDI IN of the MIDI Shield, and MIDI OUT from the Shield into the MIDI IN of the synth.  If your MIDI keys controller has a disable local keys option, use that.  If you can disable local keys, you can use the same device for keys controller and synth.  You will need 2 MIDI DIN cables, or at least will need the 5-pin DIN on the end that plugs into the Arduino.  Try to use different colors, as you will be unplugging and plugging them in very frequently.  A third cable for MIDI THRU will not be necessary for this pedal, because we don't use the clock signals in this program (ie: like arpeggiators do).
 I use a Novation UltraNova for this purpose:
 
 ![Novation UltraNova](images/ultranova.jpg)
 ![cables](images/midicable.png)
+![cables2](images/midicable2.jpg)
 
 These are two of the prototypes.  One in a red plastic box has a dozen LEDs representing the current note down.
 The other is the raw prototyping board for uploading code on a daily basis.  
