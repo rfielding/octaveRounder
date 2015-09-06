@@ -18,15 +18,21 @@ arpdr = {
   d8 f a  d,_\upo f a  d,_\upo a'_\downo f  d a'_\downo f  d
 }
 
-result = \new PianoStaff {
+result = \new PianoStaff \with {
+  instrumentName = #"output"
+} {
   \time 6/8
   \autochange \relative c {
     \arpd
   }
 }
 
+\new Staff \with {
+  instrumentName = #"input"
+}
 \relative c' {
   \time 6/8
   \arpdr
 }
+
 \result
