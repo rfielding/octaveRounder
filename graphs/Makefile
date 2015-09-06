@@ -25,3 +25,8 @@ oct:	oct.ly
 	convert oct.png -trim oct_cropped.png
 	rm oct.png
 	mv oct_cropped.png ../images
+maqam:	maqam.ly
+	lilypond -f png -danti-alias-factor=10 maqam.ly
+	convert maqam.png -trim maqam_cropped.png
+	rm maqam.png
+	mv maqam_cropped.png ../images

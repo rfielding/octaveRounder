@@ -70,6 +70,16 @@ The main point of quartertone scales is to have a pentatonic core scale, where a
 
 ![qtone](images/qtone_cropped.png)
 
+As a matter of notation, the use of a quarterflat symbol (backwards flat) is simply the natural version of the note played on the
+left of the quartertone split of the controller.
+A half-sharp symbol means to play the sharp on the quartertone split of the controller.
+Ponder the unusual case where the core pentatonic scale is centered around black keys.
+Then when we start from A flat, a minor third up gives us C flat.
+The note in the center is a B flat that is played on the left side of the quartertone split.
+This note is 3/4 tone flat from B.
+
+![maqam](images/maqam_cropped.png)
+
 And trilling works by holding down same note and playing notes in same octave, to double playing speed.
 
 ![trill](images/trill_cropped.png)
