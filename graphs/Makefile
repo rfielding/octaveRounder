@@ -1,7 +1,7 @@
 #dot comes from the graphviz package
 #convert comes from the imagemagick package
 
-all:	wiring play qtone trill
+none:
 
 wiring:	wiring1.dot
 	dot -Tpng -o ../images/wiring1.png wiring1.dot
