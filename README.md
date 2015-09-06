@@ -57,7 +57,9 @@ These are two of the prototypes.  One in a red plastic box has a dozen LEDs repr
 The other is the raw prototyping board for uploading code on a daily basis.  
 Some of these have used Arduino Mega 2560, but these just use Arduino Uno.
 
-    The Uno only has a very small 2k of RAM available, so the code needs to be very tight on memory.
+    The Uno only has a very small 2k of RAM available,
+    so the code needs to be very tight on memory.
+    Currently, it uses about 512 bytes of RAM.
 
 ![Prototypes](images/twoprototypes.jpg)
 
