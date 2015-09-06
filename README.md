@@ -29,8 +29,8 @@ Buy an Arduino Uno, easily available from electronics stores for as low as $5:
 
 ![Arduino Uno](images/arduinouno.jpg)
 
-    The Uno only has a 2048 bytes of RAM available.
-    This current code uses about 512 bytes of RAM.
+>The Uno only has a 2048 bytes of RAM available.
+>This current code uses about 512 bytes of RAM.
 
 Buy a MIDI shield for roughly $20.  You typically need to buy them online.  I find them on Amazon (Olimex, LinkSprite).  You only need MIDI IN and OUT for these purposes (you can buy a partial MIDI shield that doesn't have a MIDI THRU, with only IN and OUT if you like):
 
@@ -39,14 +39,14 @@ Buy a MIDI shield for roughly $20.  You typically need to buy them online.  I fi
 
 Stack them together.  Be very careful to align the pins correctly before plugging into USB (ie: the power source), or you can damage the board.  Then use the Arduino SDK to upload [octaveRounder.ino](octaveRounder.ino) into the Arduino boardi over the USB (press the 'Raw' button to get a downloadable link in your browser that you can right click to save-as).
   
-    Note that in order to load programs, the MIDI shield usually 
-    needs to be disabled with a switch/jumper during the program
-    upload phase.  Your synth can also sometimes get into a strange 
-    state while being programmed, and may need a reset if you leave
-    cables plugged in during programming.  If you try to program
-    with the switch on, you may need to press the reset button
-    on the Arduino, set the switch for programming, 
-    set the COM port again, and retry.
+>Note that in order to load programs, the MIDI shield usually 
+>needs to be disabled with a switch/jumper during the program
+>upload phase.  Your synth can also sometimes get into a strange 
+>state while being programmed, and may need a reset if you leave
+>cables plugged in during programming.  If you try to program
+>with the switch on, you may need to press the reset button
+>on the Arduino, set the switch for programming, 
+>set the COM port again, and retry.
 
 
 As always with MIDI, make sure that the keyboard is set to transmit MIDI out (usually on channel 1).  Then MIDI OUT from that keys controller into the MIDI IN of the MIDI Shield, and MIDI OUT from the Shield into the MIDI IN of the synth.  If your MIDI keys controller has a disable local keys option, use that.  If you can disable local keys, you can use the same device for keys controller and synth.  You will need 2 MIDI DIN cables, or at least will need the 5-pin DIN on the end that plugs into the Arduino.  Try to use different colors, as you will be unplugging and plugging them in very frequently.  A third cable for MIDI THRU will not be necessary for this pedal, because we don't use the clock signals in this program (ie: like arpeggiators do).
