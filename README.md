@@ -50,7 +50,8 @@ The Uno only has a very small 2k of RAM available, so the code needs to be very 
 Once you have all of the parts you need, configure them and plug them together.
 This diagram gives a complete inventory of what needs to be done.
 Note that you can make a minimal (and not optically isolated!) MIDI shield with two female MIDI DIN connectors and a pair of 220 Ohm resistors,
-but that may not be more hazardous than you would like for the MIDI device that this is to be plugged into.
+but you may judge it to be too hazardous for the MIDI device that this is to be plugged into.
+
 ![Inventory](images/wiring1.png)
 
 #What it does
