@@ -36,11 +36,13 @@ Buy a MIDI shield for roughly $20.  You typically need to buy them online.  I fi
 
 Stack them together.  Be very careful to align the pins correctly before plugging into USB (ie: the power source), or you can damage the board.  Then use the Arduino SDK to upload [octaveRounder.ino](octaveRounder.ino) into the Arduino boardi over the USB (press the 'Raw' button to get a downloadable link in your browser that you can right click to save-as).
   
-    Note that in order to load programs, the MIDI shield usually needs to be disabled
-    with a switch/jumper during the program upload phase.  Your synth can also sometimes 
-    get into a strange state while being programmed, and may need a reset if you leave
-    cables plugged in during programming.  If you try to program with the switch on,
-    you may need to press the reset button on the Arduino, set the switch for programming,
+    Note that in order to load programs, the MIDI shield usually 
+    needs to be disabled with a switch/jumper during the program
+    upload phase.  Your synth can also sometimes get into a strange 
+    state while being programmed, and may need a reset if you leave
+    cables plugged in during programming.  If you try to program
+    with the switch on, you may need to press the reset button
+    on the Arduino, set the switch for programming, 
     set the COM port again, and retry.
 
 
@@ -54,14 +56,18 @@ I use a Novation UltraNova for this purpose:
 These are two of the prototypes.  One in a red plastic box has a dozen LEDs representing the current note down.
 The other is the raw prototyping board for uploading code on a daily basis.  
 Some of these have used Arduino Mega 2560, but these just use Arduino Uno.
-The Uno only has a very small 2k of RAM available, so the code needs to be very tight on memory.
+
+    The Uno only has a very small 2k of RAM available, so the code needs to be very tight on memory.
 
 ![Prototypes](images/twoprototypes.jpg)
 
 Once you have all of the parts you need, configure them and plug them together.
 This diagram gives a complete inventory of what needs to be done.
-Note that you can make a minimal (and not optically isolated!) MIDI shield with two female MIDI DIN connectors and a pair of 220 Ohm resistors,
-but you may judge it to be too hazardous for the MIDI device that this is to be plugged into.
+
+    Note that you can make a minimal (and not optically isolated!)
+    MIDI shield with two female MIDI DIN connectors and a pair
+    of 220 Ohm resistors, but you may judge it to be too
+    hazardous for the MIDI device that this is to be plugged into.
 
 ![Inventory](images/wiring1.png)
 
