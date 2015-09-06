@@ -91,7 +91,7 @@ This is because the octave split only moves by one octave at a time when both no
 
 ![oct](images/oct_cropped.png)
 
-Note that if you want to avoid the quartertone split, you can move it out of the way by hitting the physical octave switch on your keys controller.
+Note that if you want to avoid the quartertone split, you can move it out of the way by hitting the physical octave "Up" switch on your keys controller.
 In future releases, the quartertone split might be moved down one octave so that quartertone split is off by default on short keyboards, but
 readily available by going down one octave with the octave switch button.
 
