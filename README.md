@@ -29,6 +29,9 @@ Buy an Arduino Uno, easily available from electronics stores for as low as $5:
 
 ![Arduino Uno](images/arduinouno.jpg)
 
+    The Uno only has a 2048 bytes of RAM available.
+    This current code uses about 512 bytes of RAM.
+
 Buy a MIDI shield for roughly $20.  You typically need to buy them online.  I find them on Amazon (Olimex, LinkSprite).  You only need MIDI IN and OUT for these purposes (you can buy a partial MIDI shield that doesn't have a MIDI THRU, with only IN and OUT if you like):
 
 ![LinkSprite MIDI Shield](images/midishield.jpg)
@@ -56,10 +59,6 @@ I use a Novation UltraNova for this purpose:
 These are two of the prototypes.  One in a red plastic box has a dozen LEDs representing the current note down.
 The other is the raw prototyping board for uploading code on a daily basis.  
 Some of these have used Arduino Mega 2560, but these just use Arduino Uno.
-
-    The Uno only has a very small 2k of RAM available,
-    so the code needs to be very tight on memory.
-    Currently, it uses about 512 bytes of RAM.
 
 ![Prototypes](images/twoprototypes.jpg)
 
