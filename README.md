@@ -68,10 +68,10 @@ This diagram gives a complete inventory of what needs to be done.
 ![Inventory](images/wiring1.png)
 
 
-    Note that you can make a minimal (and not optically isolated!)
-    MIDI shield with two female MIDI DIN connectors and a pair
-    of 220 Ohm resistors, but you may judge it to be too
-    hazardous for the MIDI device that this is to be plugged into.
+>Note that you can make a minimal (and not optically isolated!)
+>MIDI shield with two female MIDI DIN connectors and a pair
+>of 220 Ohm resistors, but you may judge it to be too
+>hazardous for the MIDI device that this is to be plugged into.
 
 
 #What it does
