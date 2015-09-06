@@ -17,3 +17,7 @@ trill:	trill.ly
 	lilypond -f png trill.ly
 	convert trill.png -trim trill_cropped.png
 	mv trill_cropped.png ../images
+oct:	oct.ly
+	lilypond -f png oct.ly
+	convert oct.png -trim oct_cropped.png
+	mv oct_cropped.png ../images

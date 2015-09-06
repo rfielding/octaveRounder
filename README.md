@@ -73,6 +73,16 @@ And trilling works by holding down same note and playing notes in same octave, t
 
 ![trill](images/trill_cropped.png)
 
+When not traversing the quartertone split, the octave shift only moves by one note at a time.
+As a consequence, you can still make octave jumps and higher.
+This is because the octave split only moves by one octave at a time when both notes are on the same side of the split.
+
+![oct](images/oct_cropped.png)
+
+Note that if you want to avoid the quartertone split, you can move it out of the way by hitting the physical octave switch on your keys controller.
+In future releases, the quartertone split might be moved down one octave so that quartertone split is off by default on short keyboards, but
+readily available by going down one octave with the octave switch button.
+
 #How It Works
 
 The expected behavior of this MIDI filtering pedal can be clearly defined by saying what bytes we expect to come out of the pedal in response to certain bytes going in.  To simplify things, assume that we are going to work with MIDI channel 1 only.  We will talk entirely in terms of hexadecimal numbers when speaking of the protocol.  That means that MIDI:
