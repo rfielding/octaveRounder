@@ -6,18 +6,22 @@ none:
 wiring:	wiring1.dot
 	dot -Tpng -o ../images/wiring1.png wiring1.dot
 play:	play.ly
-	lilypond -f png play.ly
+	lilypond -f png -danti-alias-factor=10 play.ly
 	convert play.png -trim play_cropped.png
+	rm play.png
 	mv play_cropped.png ../images
 qtone:	qtone.ly
-	lilypond -f png qtone.ly
+	lilypond -f png -danti-alias-factor=10 qtone.ly
 	convert qtone.png -trim qtone_cropped.png
+	rm qtone.png
 	mv qtone_cropped.png ../images
 trill:	trill.ly
-	lilypond -f png trill.ly
+	lilypond -f png -danti-alias-factor=10 trill.ly
 	convert trill.png -trim trill_cropped.png
+	rm trill.png
 	mv trill_cropped.png ../images
 oct:	oct.ly
-	lilypond -f png oct.ly
+	lilypond -f png -danti-alias-factor=10 oct.ly
 	convert oct.png -trim oct_cropped.png
+	rm oct.png
 	mv oct_cropped.png ../images
