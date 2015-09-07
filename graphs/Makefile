@@ -1,37 +1,13 @@
 #dot comes from the graphviz package
 #convert comes from the imagemagick package
-
 none:
 
-wiring:	wiring1.dot
-	dot -Tpng -o ../images/wiring1.png wiring1.dot
-play:	play.ly
-	lilypond -f png -danti-alias-factor=10 play.ly
-	convert play.png -trim play_cropped.png
-	rm play.png
-	mv play_cropped.png ../images
-qtone:	qtone.ly
-	lilypond -f png -danti-alias-factor=10 qtone.ly
-	convert qtone.png -trim qtone_cropped.png
-	rm qtone.png
-	mv qtone_cropped.png ../images
-trill:	trill.ly
-	lilypond -f png -danti-alias-factor=10 trill.ly
-	convert trill.png -trim trill_cropped.png
-	rm trill.png
-	mv trill_cropped.png ../images
-oct:	oct.ly
-	lilypond -f png -danti-alias-factor=10 oct.ly
-	convert oct.png -trim oct_cropped.png
-	rm oct.png
-	mv oct_cropped.png ../images
-maqam:	maqam.ly
-	lilypond -f png -danti-alias-factor=10 maqam.ly
-	convert maqam.png -trim maqam_cropped.png
-	rm maqam.png
-	mv maqam_cropped.png ../images
-speed:	speed.ly
-	lilypond -f png -danti-alias-factor=10 speed.ly
-	convert speed.png -trim speed_cropped.png
-	rm speed.png
-	mv speed_cropped.png ../images
+%:	%.dot
+	dot -Tpng -o ../images/$@.png $@.dot
+
+%:	%.ly
+	lilypond -f png -danti-alias-factor=10 $@.ly
+	convert $@.png -trim $@_cropped.png
+	rm $@.png
+	mv $@_cropped.png ../images
+
