@@ -12,24 +12,24 @@ downo = \markup {
 }
 
 scalehi = {
-  d'2
-  r16 e' r e' r e' r e'
-  f'2
-  r16 e' r e' r e' r e'
+  d'4
+  r16 e' r e'
+  f'4
+  r16 e' r e'
 }
 
 scalelo = {
-  r16 d' r d' r d' r d'
-  e'2
-  r16 f' r f' r f' r f'  
-  e'2
+  r16 d' r d'
+  e'4
+  r16 f' r f'
+  e'4
 }
 
 scaleboth = {
-  d'16 d' d' d' d' d' d' d' 
-  eeh'16 eeh' eeh' eeh' eeh' eeh' eeh' eeh' 
-  f'16 f' f' f' f' f' f' f' 
-  eeh'16 eeh' eeh' eeh' eeh' eeh' eeh' eeh' 
+  d'16 d' d' d'
+  eeh'16 eeh' eeh' eeh'
+  f'16 f' f' f'
+  eeh'16 eeh' eeh' eeh'
 }
 
 \new PianoStaff \with {
