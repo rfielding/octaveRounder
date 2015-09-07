@@ -30,3 +30,8 @@ maqam:	maqam.ly
 	convert maqam.png -trim maqam_cropped.png
 	rm maqam.png
 	mv maqam_cropped.png ../images
+speed:	speed.ly
+	lilypond -f png -danti-alias-factor=10 speed.ly
+	convert speed.png -trim speed_cropped.png
+	rm speed.png
+	mv speed_cropped.png ../images

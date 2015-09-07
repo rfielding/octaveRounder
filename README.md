@@ -112,8 +112,18 @@ This is because the octave split only moves by one octave at a time when both no
 ![oct](images/oct_cropped.png)
 
 Note that if you want to avoid the quartertone split, you can move it out of the way by hitting the physical octave "Up" switch on your keys controller.
-In future releases, the quartertone split might be moved down one octave so that quartertone split is off by default on short keyboards, but
-readily available by going down one octave with the octave switch button.
+
+>In future releases, the quartertone split might be
+>moved down one octave so that quartertone split is
+>off by default on short keyboards, but
+>readily available by going down one
+>octave with the physical octave switch button.
+
+An appropriate rhythm and fingering can make fast runs very easy to do.  A common way of playing octave rounding is to pick 4 notes
+in the octave, and play the two lower ones with fingers of the left hand and two fingers of the right hand for the top two notes.
+
+![speed](images/speed_cropped.png)
+
 
 #How It Works
 
