@@ -33,7 +33,7 @@ run = {
 }
 
 \new PianoStaff \with {
-  instrumentName = #"input"
+  instrumentName = #"output"
 } {
   \repeat volta 2
   \autochange \relative {
