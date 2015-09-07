@@ -87,6 +87,9 @@ And trilling works by holding down same note and playing notes in same octave, t
 
 ![trill](images/trill_cropped.png)
 
+When trilling across the quartertone split, playing the same note re-triggers the same note that is being held.  This lets you play scales that contain a mix of notes with quartertones, while still being able to trill.
+![qtrill](images/qtrill_cropped.png)
+
 When not traversing the quartertone split, the octave shift only moves by one note at a time.  As a consequence, you can still make octave jumps and higher.
 This is because the octave split only moves by one octave at a time when both notes are on the same side of the split.
 
