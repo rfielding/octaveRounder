@@ -2,13 +2,9 @@
 
 ![arduino](images/arduino.png)
 
-This is an arduino project for automated octave switching.
-Run it as a proxy between midi out and midi in.
+This is an arduino project for automated octave switching.  Run it as a proxy between midi out and midi in.
 
-The end result is kind of like manual arpeggiation.  It lets you do
-extremely fast scale and arpeggio runs.  It isn't clock based, and doesn't make guesses.
-It only plays notes you actually play, but octave switches to the nearest note to the previous note.
-In practice it means that jumps up of a fifth or more shift octave down, and jumps down of a fifth or more shift an octave up.
+The end result is kind of like manual arpeggiation.  It lets you do extremely fast scale and arpeggio runs.  It isn't clock based, and doesn't make guesses.  It only plays notes you actually play, but octave switches to the nearest note to the previous note.  In practice it means that jumps up of a fifth or more shift octave down, and jumps down of a fifth or more shift an octave up.
 
 #How To
 
@@ -58,14 +54,11 @@ I use a Novation UltraNova for this purpose:
 ![cables](images/midicable.png)
 ![cables2](images/midicable2.jpg)
 
-These are two of the prototypes.  One in a red plastic box has a dozen LEDs representing the current note down.
-The other is the raw prototyping board for uploading code on a daily basis.  
-Some of these have used Arduino Mega 2560, but these just use Arduino Uno.
+These are two of the prototypes.  One in a red plastic box has a dozen LEDs representing the current note down.  The other is the raw prototyping board for uploading code on a daily basis.  Some of these have used Arduino Mega 2560, but these just use Arduino Uno.
 
 ![Prototypes](images/twoprototypes.jpg)
 
-Once you have all of the parts you need, configure them and plug them together.
-This diagram gives a complete inventory of what needs to be done.
+Once you have all of the parts you need, configure them and plug them together.  This diagram gives a complete inventory of what needs to be done.
 
 ![Inventory](images/wiring1.png)
 
@@ -78,28 +71,15 @@ This diagram gives a complete inventory of what needs to be done.
 
 #What it does
 
-At a basic level, it is doing automated octave shifting. Musically, it is manipulating a virtual octave switch.
-It makes a tremendous difference when octave switching is automated, because the rhythm needs to be right when
-moving hands long distance or when hitting octave switches.  The arrowheads denoting an octave switch are done automatically,
-and occur when a change is more than 6 semitones (a tri-tone).
+At a basic level, it is doing automated octave shifting. Musically, it is manipulating a virtual octave switch.  It makes a tremendous difference when octave switching is automated, because the rhythm needs to be right when moving hands long distance or when hitting octave switches.  The arrowheads denoting an octave switch are done automatically, and occur when a change is more than 6 semitones (a tri-tone).
 
 ![play](images/play_cropped.png)
 
-The keyboard is virtually split at middle C.  Everything below middle C is a quartertone flat.
-This means that when you hit a key on the low side, the pitch wheel goes down an extra half of a note (1/4 tone).
-When you play a note on the other side, the adjustment is removed.
-So, left hand plays the quartertone notes or normal notes; while right hand stays to the right of middle C.
-The main point of quartertone scales is to have a pentatonic core scale, where all minor thirds can be split exactly in half with a 1/4 tone.
+The keyboard is virtually split at middle C.  Everything below middle C is a quartertone flat.  This means that when you hit a key on the low side, the pitch wheel goes down an extra half of a note (1/4 tone).  When you play a note on the other side, the adjustment is removed.  So, left hand plays the quartertone notes or normal notes; while right hand stays to the right of middle C.  The main point of quartertone scales is to have a pentatonic core scale, where all minor thirds can be split exactly in half with a 1/4 tone.
 
 ![qtone](images/qtone_cropped.png)
 
-As a matter of notation, the use of a quarterflat symbol (backwards flat) is simply the natural version of the note played on the
-left of the quartertone split of the controller.
-A half-sharp symbol means to play the sharp on the quartertone split of the controller.
-Ponder the unusual case where the core pentatonic scale is centered around black keys.
-Then when we start from A flat, a minor third up gives us C flat.
-The note in the center is a B flat that is played on the left side of the quartertone split.
-This note is 3/4 tone flat from B.
+As a matter of notation, the use of a quarterflat symbol (backwards flat) is simply the natural version of the note played on the left of the quartertone split of the controller.  A half-sharp symbol means to play the sharp on the quartertone split of the controller.  Ponder the unusual case where the core pentatonic scale is centered around black keys.  Then when we start from A flat, a minor third up gives us C flat.  The note in the center is a B flat that is played on the left side of the quartertone split.  This note is 3/4 tone flat from B.
 
 ![maqam](images/maqam_cropped.png)
 
@@ -107,22 +87,16 @@ And trilling works by holding down same note and playing notes in same octave, t
 
 ![trill](images/trill_cropped.png)
 
-When not traversing the quartertone split, the octave shift only moves by one note at a time.
-As a consequence, you can still make octave jumps and higher.
+When not traversing the quartertone split, the octave shift only moves by one note at a time.  As a consequence, you can still make octave jumps and higher.
 This is because the octave split only moves by one octave at a time when both notes are on the same side of the split.
 
 ![oct](images/oct_cropped.png)
 
 Note that if you want to avoid the quartertone split, you can move it out of the way by hitting the physical octave "Up" switch on your keys controller.
 
->In future releases, the quartertone split might be
->moved down one octave so that quartertone split is
->off by default on short keyboards, but
->readily available by going down one
->octave with the physical octave switch button.
+>In future releases, the quartertone split might be moved down one octave so that quartertone split is off by default on short keyboards, but readily available by going down one octave with the physical octave switch button.
 
-An appropriate rhythm and fingering can make fast runs very easy to do.  A common way of playing octave rounding is to pick 4 notes
-in the octave, and play the two lower ones with fingers of the left hand and two fingers of the right hand for the top two notes.
+An appropriate rhythm and fingering can make fast runs very easy to do.  A common way of playing octave rounding is to pick 4 notes in the octave, and play the two lower ones with fingers of the left hand and two fingers of the right hand for the top two notes.
 
 ![speed](images/speed_cropped.png)
 
@@ -142,8 +116,7 @@ A completely transparent pedal would simply emit exactly the bytes that were put
 
 ![unittest1](images/unittest1.png)
 
-Note that we see the note going up and going back down.  If our filter works correctly, all notes should eventually be back to zero no matter what we do to the keyboard.
-This is an arpeggio going up (note the 0x0c is 12 in hexadecimal - the number of notes in an octave)
+Note that we see the note going up and going back down.  If our filter works correctly, all notes should eventually be back to zero no matter what we do to the keyboard.  This is an arpeggio going up (note the 0x0c is 12 in hexadecimal - the number of notes in an octave)
 
 ![unittest2](images/unittest2.png)
 
@@ -172,19 +145,13 @@ In order to correctly set pitch bending on mono voice keyboards when a finger co
 |          126|      |            |         |
 |          127|      |            |         |
 
->In this table, all blank entries are zero.
->When all fingers come up, id starts from 1 again.
+>In this table, all blank entries are zero.  When all fingers come up, id starts from 1 again.
 
 Because incoming notes get translated into outgoing notes, we record the sent note to make sure that we turn off the note that we turned on in the synth.
-When a note is turned off, the sent\_vol is set to zero along with the id.  
-We have three notes still on.  There are gaps in the notes still turned on, because fingers have come up since this chord was held down.
-If finger 62 comes up, there would be no audible response, as that note is still buried by finger 60.
-Since finger 60 has the highest number, it is still the leader.
-If finger 60 instead came up, then 62 would be the new leader, as it would have the highest current id.
+When a note is turned off, the sent\_vol is set to zero along with the id.  We have three notes still on.  There are gaps in the notes still turned on, because fingers have come up since this chord was held down.  If finger 62 comes up, there would be no audible response, as that note is still buried by finger 60.  Since finger 60 has the highest number, it is still the leader.  If finger 60 instead came up, then 62 would be the new leader, as it would have the highest current id.
 
-If we want to figure out how many outstanding versions of note 50 have been sent, we scan the entire table and just count
-the occurrences of sent\_note is 50 where sent\_vol is not zero.
-If we go to turn on a note, and find that it is already on, then we send the MIDI notes to turn it off before we turn it back on.
-By doing this, anybody that is counting the increments and decrements for a rcvd\_note will come out to zero once all fingers are up.
-If we ever went below zero, then we should panic and reset the pedal to its initial state, because that means more note downs than ups.
-This can happen if MIDI notes are lost by plugging and unplugging cables while notes are held. 
+If we want to figure out how many outstanding versions of note 50 have been sent, we scan the entire table and just count the occurrences of sent\_note is 50 where sent\_vol is not zero.  If we go to turn on a note, and find that it is already on, then we send the MIDI notes to turn it off before we turn it back on.  By doing this, anybody that is counting the increments and decrements for a rcvd\_note will come out to zero once all fingers are up.  If we ever went below zero, then we should panic and reset the pedal to its initial state, because that means more note downs than ups.  This can happen if MIDI notes are lost by plugging and unplugging cables while notes are held.
+
+The mapping from rcvd\_note to sent\_note is done by the note\_adjust variable.  This is the heart of octave rounding.  When a note is turned on by way of rcvd\_note, we remember where on the keyboard that was.  We compare the previous rcvd\_note value to the current one.  If the difference is greater than 6 (in units of semitones), then we shift the octave down by subtracting 12 from the note\_adjust variable.  Likewise, if the difference is less than -6, then we shift an octave up by adding 12 to it.  If both of these notes are on the same side of the quartertone split, then we only shift by one octave.  That allows the possibility of having note jumps that are larger than a fifth.  If we are on opposite sides of the quartertone split, then we shift octaves until the diff is between -6 and 6.  Note that for staying in range, we will add in octave shifts as well.  We do this so that we don't send garbage data to the synth with MIDI note numbers that are either negative or above 127.
+
+Note that in the implementation that we only read new bytes in the main loop, where we simply consume all available bytes.  Because we may shift or rewrite the information we send, we rely on MIDI protocol using fixed length messages.  We enqueue full messages before sending the response.  We do this so that we can do things like insert pitch bends before note sends, or insert note off before redundant note on, etc.
