@@ -156,3 +156,35 @@ The final behavior that we need to capture is in 'fixing' the standard behavior 
 
 ![unittest5](images/unittest5.png) 
 
+#Implementation
+
+In order to correctly set pitch bending on mono voice keyboards when a finger comes up, we need to model the algorithm that the synth uses for note stacking in mono voices.  It appears that if the algorithm is to pick the newest note on as the leader when a note is off, then it matches most (if not all) synths.  So that is the algorithm that is used.  So we fully track state that we forwarded on to the synth.  We know the note re-mapping, volume re-mapping, and an id that lets us track the order in which these notes were sent.  This table, with rcvd\_note being the row, uses almost all of the RAM that is used in the program:
+
+|rcvd\_note   |id    |sent\_note  |sent\_vol|
+|------------:|-----:|-----------:|--------:|
+|            0|      |            |         |
+|            1|      |            |         |
+|          ...|   ...|         ...|      ...|
+|           60|    35|          48|       33|
+|           61|    32|          49|       83|
+|           62|    34|          50|       52|
+|          ...|   ...|         ...|      ...|
+|          126|      |            |         |
+|          127|      |            |         |
+
+>In this table, all blank entries are zero.
+>When all fingers come up, id starts from 1 again.
+
+Because incoming notes get translated into outgoing notes, we record the sent note to make sure that we turn off the note that we turned on in the synth.
+When a note is turned off, the sent\_vol is set to zero along with the id.  
+We have three notes still on.  There are gaps in the notes still turned on, because fingers have come up since this chord was held down.
+If finger 62 comes up, there would be no audible response, as that note is still buried by finger 60.
+Since finger 60 has the highest number, it is still the leader.
+If finger 60 instead came up, then 62 would be the new leader, as it would have the highest current id.
+
+If we want to figure out how many outstanding versions of note 50 have been sent, we scan the entire table and just count
+the occurrences of sent\_note is 50 where sent\_vol is not zero.
+If we go to turn on a note, and find that it is already on, then we send the MIDI notes to turn it off before we turn it back on.
+By doing this, anybody that is counting the increments and decrements for a rcvd\_note will come out to zero once all fingers are up.
+If we ever went below zero, then we should panic and reset the pedal to its initial state, because that means more note downs than ups.
+This can happen if MIDI notes are lost by plugging and unplugging cables while notes are held. 
