@@ -5,7 +5,7 @@ const int midi_note_count = 128;
 const int byte_queue_length = 16;
 const int pitch_wheel_centered = 8192;
 const byte cmd_last_never = 255;
-const int split_point = 60;
+const int split_point = (60-12);
 const int oct_notes = 12;
 const int ceiling7bit = 128;
 
@@ -21,7 +21,8 @@ byte rpn_lsb = 0x7F;
 byte rpn_msb = 0x7F;
 byte rpn_msb_data = 0;
 byte rpn_lsb_data = 0;
-byte lcd_last = -1;
+byte lcd_last = 0;
+byte lcd_oct = 0;
 
 int pitch_wheel_in = pitch_wheel_centered;
 int pitch_wheel_sent = pitch_wheel_centered;
@@ -36,9 +37,9 @@ struct note_state {
 } notes[midi_note_count];
 
 void pinSetup() {
-  for(int i=0; i<oct_notes; i++) {
-    pinMode(i+2, OUTPUT);
-    digitalWrite(i+2, LOW);    
+  for (int i = 0; i < oct_notes; i++) {
+    pinMode(i + 2, OUTPUT);
+    digitalWrite(i + 2, LOW);
   }
 }
 
@@ -48,20 +49,31 @@ void pinSetup() {
 #define LCD_D5 47
 #define LCD_D6 45
 #define LCD_D7 43
+#define BUT_DN 41
+#define BUT_UP 39
+#define BUT_TOG 37
 
-LiquidCrystal lcd(LCD_RS,LCD_ENABLE,LCD_D4,LCD_D5,LCD_D6,LCD_D7);
+LiquidCrystal lcd(LCD_RS, LCD_ENABLE, LCD_D4, LCD_D5, LCD_D6, LCD_D7);
+
+void lcdSetup() {
+  pinMode(LCD_RS, OUTPUT);
+  pinMode(LCD_ENABLE, OUTPUT);
+  pinMode(LCD_D4, OUTPUT);
+  pinMode(LCD_D5, OUTPUT);
+  pinMode(LCD_D6, OUTPUT);
+  pinMode(LCD_D7, OUTPUT);
+  pinMode(BUT_DN, INPUT);
+  pinMode(BUT_UP, INPUT);
+  pinMode(BUT_TOG, INPUT);
+  lcd.begin(16, 2);
+  lcd.print("Jins 1.2");
+}
+
 /**
   Reset all mutable state, because test harness needs to clean up
  */
 void setup() {
-  pinMode(LCD_RS,OUTPUT);
-  pinMode(LCD_ENABLE,OUTPUT);
-  pinMode(LCD_D4,OUTPUT);
-  pinMode(LCD_D5,OUTPUT);
-  pinMode(LCD_D6,OUTPUT);
-  pinMode(LCD_D7,OUTPUT);
-  lcd.begin(16,2);
-  lcd.print("Jins 1.2");
+  lcdSetup();
   cmd_channel = 0;
   cmd_state = 0;
   cmd_args[0] = 0;
@@ -353,14 +365,14 @@ static void byte_enqueue(byte b) {
 byte ledStates[oct_notes];
 
 static void blinkys() {
-  for(int i=0; i<oct_notes; i++) {
+  for (int i = 0; i < oct_notes; i++) {
     ledStates[i] = LOW;
   }
-  for(int i=0; i<midi_note_count; i++) {
-    ledStates[i%12] |= (notes[i].sent_vol > 0);
+  for (int i = 0; i < midi_note_count; i++) {
+    ledStates[i % 12] |= (notes[i].sent_vol > 0);
   }
-  for(int i=0; i<oct_notes; i++) {
-    digitalWrite(i+2, ledStates[i]);
+  for (int i = 0; i < oct_notes; i++) {
+    digitalWrite(i + 2, ledStates[i]);
   }
 }
 
@@ -379,27 +391,66 @@ char* note_names[] = {
   "B ",
 };
 
+
+int lastBtnHi = 1;
+int lastBtnLo = 0;
+
+void doLcd() {
+  byte oct = (cmd_last + note_adjust) / 12;
+  byte note = (cmd_last + note_adjust) % 12;
+
+  //If data needs re-rendering
+  if (note != lcd_last || oct != lcd_oct) {
+    lcd.setCursor(0, 1);
+    lcd.print(note_names[note]);
+
+    if (oct < 10) {
+      lcd.setCursor(6,1);
+      lcd.print(" ");
+      lcd.setCursor(7, 1);
+      lcd.print(oct);
+    } else {
+      lcd.setCursor(6,1);
+      lcd.print(oct);
+    }
+    
+    lcd_last = cmd_last;
+    lcd_oct = oct;
+  }
+
+  //Check buttons...debounced
+  int bDown = digitalRead(BUT_DN);
+  int bUp = digitalRead(BUT_UP);
+  int bTog = digitalRead(BUT_TOG);
+  int now = millis();
+
+  if (bUp || bDown || bTog) {
+    int timeDelta = now - lastBtnHi;
+    lastBtnHi = now;
+    if (timeDelta > 10 && lastBtnLo < lastBtnHi) {
+      if (bDown) {
+        if (note_adjust + cmd_last >= 12) {
+          note_adjust -= 12;
+        }
+      }
+      if (bUp) {
+        if (note_adjust + cmd_last < (127 - 12)) {
+          note_adjust += 12;
+        }
+      }
+      if (bTog) {
+        note_adjust = 0;
+      }
+    }
+  } else {
+    lastBtnLo = now;
+  }
+}
+
 //No calls to available or read should happen elsewhere
 void loop() {
   while (Serial.available()) {
     byte_enqueue(Serial.read());
   }
-  //blinkys(); !!DO NOT INCLUDE THIS FUNCTION IF ANY DIGITAL PINS 2-13 ARE WIRED FOR READ, AS A PEDAL WITH A FOOTSWITCH WOULD BE.  IT CAN SHORT THE BOARD!!
-  
-  if(cmd_last != lcd_last) {
-    byte b = cmd_last % 12;
-    lcd.setCursor(0,1);
-    lcd.print(note_names[b]);
-    if(in_quartertone_zone(cmd_last)) {
-      lcd.setCursor(2,1);
-      lcd.print("-");
-    } else {
-      lcd.setCursor(2,1);
-      lcd.print(" ");
-    }
-    lcd.setCursor(6,1);
-    lcd.print(((cmd_last+note_adjust) / 12));
-    lcd_last = cmd_last;
-  }
-  
+  doLcd();
 }
