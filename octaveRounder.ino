@@ -1,3 +1,5 @@
+#include <LiquidCrystal.h>
+
 const int midi_serial_rate = 31250;
 const int midi_note_count = 128;
 const int byte_queue_length = 16;
@@ -19,6 +21,7 @@ byte rpn_lsb = 0x7F;
 byte rpn_msb = 0x7F;
 byte rpn_msb_data = 0;
 byte rpn_lsb_data = 0;
+byte lcd_last = -1;
 
 int pitch_wheel_in = pitch_wheel_centered;
 int pitch_wheel_sent = pitch_wheel_centered;
@@ -39,10 +42,26 @@ void pinSetup() {
   }
 }
 
+#define LCD_RS 53
+#define LCD_ENABLE 51
+#define LCD_D4 49
+#define LCD_D5 47
+#define LCD_D6 45
+#define LCD_D7 43
+
+LiquidCrystal lcd(LCD_RS,LCD_ENABLE,LCD_D4,LCD_D5,LCD_D6,LCD_D7);
 /**
   Reset all mutable state, because test harness needs to clean up
  */
 void setup() {
+  pinMode(LCD_RS,OUTPUT);
+  pinMode(LCD_ENABLE,OUTPUT);
+  pinMode(LCD_D4,OUTPUT);
+  pinMode(LCD_D5,OUTPUT);
+  pinMode(LCD_D6,OUTPUT);
+  pinMode(LCD_D7,OUTPUT);
+  lcd.begin(16,2);
+  lcd.print("Jins 1.2");
   cmd_channel = 0;
   cmd_state = 0;
   cmd_args[0] = 0;
@@ -345,10 +364,42 @@ static void blinkys() {
   }
 }
 
+char* note_names[] = {
+  "C ",
+  "C#",
+  "D ",
+  "D#",
+  "E ",
+  "F ",
+  "F#",
+  "G ",
+  "G#",
+  "A ",
+  "A#",
+  "B ",
+};
+
 //No calls to available or read should happen elsewhere
 void loop() {
   while (Serial.available()) {
     byte_enqueue(Serial.read());
   }
   //blinkys(); !!DO NOT INCLUDE THIS FUNCTION IF ANY DIGITAL PINS 2-13 ARE WIRED FOR READ, AS A PEDAL WITH A FOOTSWITCH WOULD BE.  IT CAN SHORT THE BOARD!!
+  
+  if(cmd_last != lcd_last) {
+    byte b = cmd_last % 12;
+    lcd.setCursor(0,1);
+    lcd.print(note_names[b]);
+    if(in_quartertone_zone(cmd_last)) {
+      lcd.setCursor(2,1);
+      lcd.print("-");
+    } else {
+      lcd.setCursor(2,1);
+      lcd.print(" ");
+    }
+    lcd.setCursor(6,1);
+    lcd.print(((cmd_last+note_adjust) / 12));
+    lcd_last = cmd_last;
+  }
+  
 }
