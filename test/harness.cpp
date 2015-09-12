@@ -2,6 +2,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+//Let the arduino code set reasonable unit test options
+#define USE_TEST
+
 //Define a logging mechanism that is used both in the actual code, and in the test harness
 #define logit(msg,...) printf(msg,__VA_ARGS__)
 

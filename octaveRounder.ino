@@ -1,11 +1,16 @@
-#include <LiquidCrystal.h>
+//Options that are usable when not unit testing
+#ifndef USE_TEST
+#define USE_LCD
+#endif
+
+
 
 const int midi_serial_rate = 31250;
 const int midi_note_count = 128;
 const int byte_queue_length = 16;
 const int pitch_wheel_centered = 8192;
 const byte cmd_last_never = 255;
-const int split_point = (60-12);
+const int split_point = 60;
 const int oct_notes = 12;
 const int ceiling7bit = 128;
 
@@ -21,8 +26,7 @@ byte rpn_lsb = 0x7F;
 byte rpn_msb = 0x7F;
 byte rpn_msb_data = 0;
 byte rpn_lsb_data = 0;
-byte lcd_last = 0;
-byte lcd_oct = 0;
+byte cmd_last_qflat = 0;
 
 int pitch_wheel_in = pitch_wheel_centered;
 int pitch_wheel_sent = pitch_wheel_centered;
@@ -30,32 +34,154 @@ int pitch_wheel_adjust = 0;
 int pitch_wheel_semis = 2;
 int note_adjust = 0;
 
-struct note_state {
-  byte id;
-  byte sent_note;
-  byte sent_vol;
-} notes[midi_note_count];
 
-void pinSetup() {
-  for (int i = 0; i < oct_notes; i++) {
-    pinMode(i + 2, OUTPUT);
-    digitalWrite(i + 2, LOW);
-  }
-}
+/***
+  Bail out on bad variations!
+  
+  Handle the variations:
+    USE_LCD: LCD running on pins defined in the Display file
+    USE_LED: An array of LEDs are waired up
+    It is probably wrong if both are defined.  You also need to be careful to not run sketches that create short circuits by running inputs as outputs.
+ */
+#if defined(USE_LCD) && defined(USE_LED)
+#error "Unlikely setup. Probably not physically wired for both LCD and LED.  Be careful of accidentally setting button inputs as HIGH out"
+#endif
 
-#define LCD_RS 53
-#define LCD_ENABLE 51
-#define LCD_D4 49
-#define LCD_D5 47
-#define LCD_D6 45
-#define LCD_D7 43
-#define BUT_DN 41
-#define BUT_UP 39
-#define BUT_TOG 37
+
+
+
+
+
+
+/**
+  This is the variation with an LED display.  
+  You won't have this unless you are using a Mega board and wired up this display (and buttons)
+ */
+#ifndef USE_LCD
+#define lcd_setup()
+#define lcd_draw(t)
+#else
+#include <LiquidCrystal.h>
+//Ensure that the things exposed are defined, though they may be no-ops
+
+byte lcd_last = 0;
+byte lcd_oct = 0;
+int lcd_semis = 2;
+int lcd_lastBtnHi = 1;
+int lcd_lastBtnLo = 0;
+
+byte lcd_tqflat[8] = {
+  0b00100,
+  0b00100,
+  0b00100,
+  0b10101,
+  0b11111,
+  0b10101,
+  0b01110,
+  0b00100
+};
+const int LCD_CHAR_TQFLAT = 0;
+
+byte lcd_flat[8] = {
+  0b10000,
+  0b10000,
+  0b10000,
+  0b10111,
+  0b11001,
+  0b10001,
+  0b10010,
+  0b11100
+};
+const int LCD_CHAR_FLAT = 1;
+
+byte lcd_qflat[8] = {
+  0b00001,
+  0b00001,
+  0b00001,
+  0b11101,
+  0b10011,
+  0b10001,
+  0b01001,
+  0b00111
+};
+const int LCD_CHAR_QFLAT = 2;
+
+/*
+byte lcd_natural[8] = {
+  0b10000,
+  0b10000,
+  0b11111,
+  0b10001,
+  0b10001,
+  0b11111,
+  0b00001,
+  0b00001
+};
+*/
+byte lcd_natural[8] = {
+  0b00000,
+  0b00000,
+  0b00000,
+  0b00000,
+  0b00000,
+  0b00000,
+  0b00000,
+  0b00000
+};
+const int LCD_CHAR_NATURAL = 3;
+
+byte lcd_qsharp[8] = {
+  0b00010,
+  0b00010,
+  0b11111,
+  0b00100,
+  0b00100,
+  0b11111,
+  0b01000,
+  0b01000
+};
+const int LCD_CHAR_QSHARP = 4;
+
+byte lcd_sharp[8] = {
+  0b00101,
+  0b00101,
+  0b11111,
+  0b01010,
+  0b01010,
+  0b11111,
+  0b10100,
+  0b10100
+};
+const int LCD_CHAR_SHARP = 5;
+
+int lcd_name_data[12][4] = {
+  {'C', LCD_CHAR_NATURAL, 'C', LCD_CHAR_NATURAL},
+  {'C', LCD_CHAR_SHARP, 'D', LCD_CHAR_FLAT},
+  {'D', LCD_CHAR_NATURAL, 'D', LCD_CHAR_NATURAL},
+  {'D', LCD_CHAR_SHARP, 'E', LCD_CHAR_FLAT},
+  {'E', LCD_CHAR_NATURAL, 'E', LCD_CHAR_NATURAL},
+  {'F', LCD_CHAR_NATURAL, 'F', LCD_CHAR_NATURAL},
+  {'F', LCD_CHAR_SHARP, 'G', LCD_CHAR_FLAT},
+  {'G', LCD_CHAR_NATURAL, 'G', LCD_CHAR_NATURAL},
+  {'G', LCD_CHAR_SHARP, 'A', LCD_CHAR_FLAT},
+  {'A', LCD_CHAR_NATURAL, 'A', LCD_CHAR_NATURAL},
+  {'A', LCD_CHAR_SHARP, 'B', LCD_CHAR_FLAT},
+  {'B', LCD_CHAR_NATURAL, 'B', LCD_CHAR_NATURAL}
+};
+
+const int LCD_RS = 53;
+const int LCD_ENABLE = 51;
+const int LCD_D4 = 49;
+const int LCD_D5 = 47;
+const int LCD_D6 = 45;
+const int LCD_D7 = 43;
+const int BUT_DN = 41;
+const int BUT_UP = 39;
+const int BUT_TOG = 37;
 
 LiquidCrystal lcd(LCD_RS, LCD_ENABLE, LCD_D4, LCD_D5, LCD_D6, LCD_D7);
 
-void lcdSetup() {
+void lcd_setup() {
   pinMode(LCD_RS, OUTPUT);
   pinMode(LCD_ENABLE, OUTPUT);
   pinMode(LCD_D4, OUTPUT);
@@ -65,15 +191,154 @@ void lcdSetup() {
   pinMode(BUT_DN, INPUT);
   pinMode(BUT_UP, INPUT);
   pinMode(BUT_TOG, INPUT);
+
+  lcd.createChar(LCD_CHAR_TQFLAT, lcd_tqflat);
+  lcd.createChar(LCD_CHAR_FLAT, lcd_flat);
+  lcd.createChar(LCD_CHAR_QFLAT, lcd_qflat);
+  lcd.createChar(LCD_CHAR_NATURAL, lcd_natural);
+  lcd.createChar(LCD_CHAR_QSHARP, lcd_qsharp);
+  lcd.createChar(LCD_CHAR_SHARP, lcd_sharp);
+
   lcd.begin(16, 2);
-  lcd.print("Jins 1.2");
+  lcd.setCursor(9, 0);
+  lcd.print("Jins1.2");
 }
+
+void lcd_draw(int now) {
+  byte oct = (cmd_last + note_adjust) / 12;
+  byte note = (cmd_last + note_adjust) % 12;
+  int  semis = pitch_wheel_semis;
+
+  //If data needs re-rendering
+  if (cmd_last != cmd_last_never && (note != lcd_last || oct != lcd_oct || semis != lcd_semis)) {
+    lcd.setCursor(0, 0);
+    lcd.write(lcd_name_data[note][0]);
+    lcd.setCursor(1, 0);
+    lcd.write(lcd_name_data[note][1] - cmd_last_qflat);
+
+    if (lcd_name_data[note][1] == LCD_CHAR_NATURAL) {
+      lcd.setCursor(3, 0);
+      lcd.write(' ');
+      lcd.setCursor(4, 0);
+      lcd.write(' ');
+    } else {
+      lcd.setCursor(3, 0);
+      lcd.write(lcd_name_data[note][2]);
+      lcd.setCursor(4, 0);
+      lcd.write(lcd_name_data[note][3] - cmd_last_qflat);
+    }
+    lcd.setCursor(0, 1);
+    lcd.print("Semis: ");
+    lcd.setCursor(11, 1);
+    lcd.print(lcd_semis);
+
+    int cLoc = 6;
+    if (0 <= oct && oct < 9) {
+      lcd.setCursor(6, 0);
+      lcd.write(' ');
+      lcd.setCursor(7, 0);
+      lcd.write('0' + (oct % 10));
+    } else {
+      lcd.setCursor(6, 0);
+      lcd.write('1');
+      lcd.setCursor(7, 0);
+      lcd.write('0' + (oct % 10));
+    }
+
+    lcd_last = cmd_last;
+    lcd_oct = oct;
+  }
+
+  //Check buttons...debounced
+  int bDown = digitalRead(BUT_DN);
+  int bUp = digitalRead(BUT_UP);
+  int bTog = digitalRead(BUT_TOG);
+
+  if (bUp || bDown || bTog) {
+    int timeDelta = now - lcd_lastBtnHi;
+    lcd_lastBtnHi = now;
+    if (timeDelta > 10 && lcd_lastBtnLo < lcd_lastBtnHi) {
+      if (bDown) {
+        if (note_adjust + cmd_last >= 12) {
+          note_adjust -= 12;
+        }
+      }
+      if (bUp) {
+        if (note_adjust + cmd_last < (127 - 12)) {
+          note_adjust += 12;
+        }
+      }
+      if (bTog) {
+        note_adjust = 0;
+      }
+    }
+  } else {
+    lcd_lastBtnLo = now;
+  }
+}
+#endif
+
+
+
+
+
+
+
+
+/**
+  This option is only used on one specific hack pedal I made.  
+  Don't turn this on unless you know that the output pins aren't used as inputs in your physical setup.
+ */
+#ifndef USE_LED
+#define led_pinSetup()
+#define led_binkys()
+#else
+//Ensure that the things exposed are defined, though they may be no-ops.
+
+void led_pinSetup() {
+  for (int i = 0; i < oct_notes; i++) {
+    pinMode(i + 2, OUTPUT);
+    digitalWrite(i + 2, LOW);
+  }
+}
+
+byte ledStates[oct_notes];
+
+static void led_blinkys() {
+  for (int i = 0; i < oct_notes; i++) {
+    ledStates[i] = LOW;
+  }
+  for (int i = 0; i < midi_note_count; i++) {
+    ledStates[i % 12] |= (notes[i].sent_vol > 0);
+  }
+  for (int i = 0; i < oct_notes; i++) {
+    digitalWrite(i + 2, ledStates[i]);
+  }
+}
+#endif //USE_LED
+
+
+
+
+
+/**
+  This data structure is the heart of the application.
+  The array index is rcvd_note, the actual incoming key.
+  The point is to map incoming key to: id,sent_note,sent_vol.
+ */
+struct note_state {
+  byte id;
+  byte sent_note;
+  byte sent_vol;
+} notes[midi_note_count];
+
+
 
 /**
   Reset all mutable state, because test harness needs to clean up
  */
 void setup() {
-  lcdSetup();
+  lcd_setup();
   cmd_channel = 0;
   cmd_state = 0;
   cmd_args[0] = 0;
@@ -97,7 +362,7 @@ void setup() {
     notes[i].sent_vol = 0;
   }
   Serial.begin(midi_serial_rate);
-  //pinSetup(); !! DO NOT INCLUDE THIS IF BOARD USES ANY DIGITAL PINS 2-13 FOR READ
+  //led_pinSetup();
 }
 
 static int cmd_arg_count(const byte c) {
@@ -265,6 +530,7 @@ static void note_message() {
       quartertone_adjust(n);
       pitch_wheel_xmit();
     }
+    cmd_last_qflat = (pitch_wheel_adjust < 0);
     note_message_xmit();
     cmd_last = cmd_args[0];
   } else {
@@ -295,7 +561,7 @@ static void handle_controls() {
     rpn_msb_data = cmd_args[1];
     if ( rpn_msb == 0 ) {
       //TODO: we assume that the pitch wheel is centered when we get this message
-      //pitch_wheel_semis = rpn_msb_data;
+      pitch_wheel_semis = rpn_msb_data;
     }
   }
   if ( cmd_args[0] == 0x26 ) {
@@ -362,95 +628,16 @@ static void byte_enqueue(byte b) {
   }
 }
 
-byte ledStates[oct_notes];
-
-static void blinkys() {
-  for (int i = 0; i < oct_notes; i++) {
-    ledStates[i] = LOW;
-  }
-  for (int i = 0; i < midi_note_count; i++) {
-    ledStates[i % 12] |= (notes[i].sent_vol > 0);
-  }
-  for (int i = 0; i < oct_notes; i++) {
-    digitalWrite(i + 2, ledStates[i]);
-  }
-}
-
-char* note_names[] = {
-  "C ",
-  "C#",
-  "D ",
-  "D#",
-  "E ",
-  "F ",
-  "F#",
-  "G ",
-  "G#",
-  "A ",
-  "A#",
-  "B ",
-};
 
 
-int lastBtnHi = 1;
-int lastBtnLo = 0;
 
-void doLcd() {
-  byte oct = (cmd_last + note_adjust) / 12;
-  byte note = (cmd_last + note_adjust) % 12;
 
-  //If data needs re-rendering
-  if (note != lcd_last || oct != lcd_oct) {
-    lcd.setCursor(0, 1);
-    lcd.print(note_names[note]);
-
-    if (oct < 10) {
-      lcd.setCursor(6,1);
-      lcd.print(" ");
-      lcd.setCursor(7, 1);
-      lcd.print(oct);
-    } else {
-      lcd.setCursor(6,1);
-      lcd.print(oct);
-    }
-    
-    lcd_last = cmd_last;
-    lcd_oct = oct;
-  }
-
-  //Check buttons...debounced
-  int bDown = digitalRead(BUT_DN);
-  int bUp = digitalRead(BUT_UP);
-  int bTog = digitalRead(BUT_TOG);
-  int now = millis();
-
-  if (bUp || bDown || bTog) {
-    int timeDelta = now - lastBtnHi;
-    lastBtnHi = now;
-    if (timeDelta > 10 && lastBtnLo < lastBtnHi) {
-      if (bDown) {
-        if (note_adjust + cmd_last >= 12) {
-          note_adjust -= 12;
-        }
-      }
-      if (bUp) {
-        if (note_adjust + cmd_last < (127 - 12)) {
-          note_adjust += 12;
-        }
-      }
-      if (bTog) {
-        note_adjust = 0;
-      }
-    }
-  } else {
-    lastBtnLo = now;
-  }
-}
 
 //No calls to available or read should happen elsewhere
 void loop() {
   while (Serial.available()) {
     byte_enqueue(Serial.read());
   }
-  doLcd();
+  lcd_draw(millis());
+  //led_blinkys();
 }
