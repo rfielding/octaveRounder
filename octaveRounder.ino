@@ -169,6 +169,9 @@ int lcd_name_data[12][4] = {
   {'B', LCD_CHAR_NATURAL, 'B', LCD_CHAR_NATURAL}
 };
 
+#if 0 
+//no way to detect how we are wired... 
+//for now, edit this var to switch between the shield and the breadboarded version
 const int LCD_RS = 53;
 const int LCD_ENABLE = 51;
 const int LCD_D4 = 49;
@@ -178,6 +181,29 @@ const int LCD_D7 = 43;
 const int BUT_DN = 41;
 const int BUT_UP = 39;
 const int BUT_TOG = 37;
+#else
+//NOTE: this is an OSEPP display shield with a LinkSprite MIDI shield.
+//Since they won't stack physically, bond the shields together like:
+//  LCD +5v ->  MIDIShield +5v
+//  LCD Gnd ->  MIDIShield Gnd
+//  LCD Rx  ->  MIDIShield Rx
+//  LCD Tx  ->  MIDIShield Tx
+//
+//This effectively "stacks" them.  They have no pin conflicts.  But the display must be on top.
+//And the MIDI shield MIDI connectors can't have things in the way.
+//I also sandwiched a prototyping blank pcb in between a few of the pins on both shields
+//just to keep them fixed in place - so that inserting and removing MIDI cables, USB, and power
+//doesn't cause the soldering to get broken.
+const int LCD_RS = 8;
+const int LCD_ENABLE = 9;
+const int LCD_D4 = 4;
+const int LCD_D5 = 5;
+const int LCD_D6 = 6;
+const int LCD_D7 = 7;
+const int BUT_DN = 41;
+const int BUT_UP = 39;
+const int BUT_TOG = 37;
+#endif
 
 LiquidCrystal lcd(LCD_RS, LCD_ENABLE, LCD_D4, LCD_D5, LCD_D6, LCD_D7);
 
@@ -233,7 +259,7 @@ void lcd_draw(int now) {
     lcd.print(lcd_semis);
 
     int cLoc = 6;
-    if (0 <= oct && oct < 9) {
+    if (0 <= oct && oct <= 9) {
       lcd.setCursor(6, 0);
       lcd.write(' ');
       lcd.setCursor(7, 0);
@@ -253,6 +279,17 @@ void lcd_draw(int now) {
   int bDown = digitalRead(BUT_DN);
   int bUp = digitalRead(BUT_UP);
   int bTog = digitalRead(BUT_TOG);
+  int adc_key_in = analogRead(0); 
+  //1 analog input can stand for all of these buttons!
+  //<50 btnRight
+  //<195 btnUp
+  //<380 btnDown
+  //<555 btnLEFT
+  //<790 btnSelect
+  //else btnNone
+  if(0 <= adc_key_in && adc_key_in < 50)bUp=1;
+  if(380 <= adc_key_in && adc_key_in < 555)bDown=1;
+  if(555 <= adc_key_in && adc_key_in < 790)bTog=1;
 
   if (bUp || bDown || bTog) {
     int timeDelta = now - lcd_lastBtnHi;
@@ -291,7 +328,7 @@ void lcd_draw(int now) {
  */
 #ifndef USE_LED
 #define led_pinSetup()
-#define led_binkys()
+#define led_blinkys()
 #else
 //Ensure that the things exposed are defined, though they may be no-ops.
 
@@ -362,7 +399,7 @@ void setup() {
     notes[i].sent_vol = 0;
   }
   Serial.begin(midi_serial_rate);
-  //led_pinSetup();
+  led_pinSetup();
 }
 
 static int cmd_arg_count(const byte c) {
@@ -639,5 +676,5 @@ void loop() {
     byte_enqueue(Serial.read());
   }
   lcd_draw(millis());
-  //led_blinkys();
+  led_blinkys();
 }
