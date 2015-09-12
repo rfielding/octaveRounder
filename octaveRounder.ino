@@ -83,17 +83,17 @@ byte lcd_tqflat[8] = {
 const int LCD_CHAR_TQFLAT = 0;
 
 byte lcd_flat[8] = {
-  0b10000,
-  0b10000,
-  0b10000,
-  0b10111,
-  0b11001,
-  0b10001,
-  0b10010,
-  0b11100
+  0b01000,
+  0b01000,
+  0b01000,
+  0b01111,
+  0b01001,
+  0b01001,
+  0b01110,
+  0b01000
 };
 const int LCD_CHAR_FLAT = 1;
-
+/*
 byte lcd_qflat[8] = {
   0b00001,
   0b00001,
@@ -104,7 +104,17 @@ byte lcd_qflat[8] = {
   0b01001,
   0b00111
 };
-const int LCD_CHAR_QFLAT = 2;
+*/
+byte lcd_qflat[8] = {
+  0b01010,
+  0b01100,
+  0b01000,
+  0b11111,
+  0b01001,
+  0b01001,
+  0b01110,
+  0b01000
+};const int LCD_CHAR_QFLAT = 2;
 
 /*
 byte lcd_natural[8] = {
