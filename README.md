@@ -6,6 +6,14 @@ This is an arduino project for automated octave switching.  Run it as a proxy be
 
 The end result is kind of like manual arpeggiation.  It lets you do extremely fast scale and arpeggio runs.  It isn't clock based, and doesn't make guesses.  It only plays notes you actually play, but octave switches to the nearest note to the previous note.  In practice it means that jumps up of a fifth or more shift octave down, and jumps down of a fifth or more shift an octave up.
 
+![clock](images/clock_small.jpg)
+
+There are twelve notes in an octave on a keyboard.  So an analogy with clocks is appropriate.
+An octave contains notes modulo 12.  If it is 10 clock, and something is supposed to happen at 11,
+then common sense dicates that this generally means 1hr into the future rather than 11hrs into the past.
+Octave rounding uses this sort of logic, so that playing very quickly by omitting hand movements
+through the octaves is the default.
+
 #How To
 
 The keyboard is a quartertone flat below middle C, and designed exclusively for playing mono voices.
@@ -71,7 +79,6 @@ Once you have all of the parts you need, configure them and plug them together. 
 
 #What it does
 
-![clock](images/clock_small.jpg)
 
 At a basic level, it is doing automated octave shifting. Musically, it is manipulating a virtual octave switch.  It makes a tremendous difference when octave switching is automated, because the rhythm needs to be right when moving hands long distance or when hitting octave switches.  The arrowheads denoting an octave switch are done automatically, and occur when a change is more than 6 semitones (a tri-tone).
 
