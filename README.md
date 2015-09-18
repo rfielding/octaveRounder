@@ -71,6 +71,8 @@ Once you have all of the parts you need, configure them and plug them together. 
 
 #What it does
 
+![clock](images/clock_small.jpg)
+
 At a basic level, it is doing automated octave shifting. Musically, it is manipulating a virtual octave switch.  It makes a tremendous difference when octave switching is automated, because the rhythm needs to be right when moving hands long distance or when hitting octave switches.  The arrowheads denoting an octave switch are done automatically, and occur when a change is more than 6 semitones (a tri-tone).
 
 ![play](images/play_cropped.png)
