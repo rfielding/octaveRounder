@@ -25,7 +25,7 @@ Demonstration Video (Not a trained or proficient pianist at all):
 
 Tutorial video on using the quartertone split:
 
-https://www.youtube.com/watch?v=vimtrlz7cGs&feature=autoshare
+https://www.youtube.com/watch?v=vimtrlz7cGs
 
 To build one, install the Arduino SDK:
 
