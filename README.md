@@ -43,7 +43,7 @@ Buy a MIDI shield for roughly $20.  You typically need to buy them online.  I fi
 ![LinkSprite MIDI Shield](images/midishield.jpg)
 ![Olimex MIDI Shield](images/midishield2.jpg)
 
-Stack them together.  Be very careful to align the pins correctly before plugging into USB (ie: the power source), or you can damage the board.  Then use the Arduino SDK to upload [octaveRounder.ino](octaveRounder.ino) into the Arduino boardi over the USB (press the 'Raw' button to get a downloadable link in your browser that you can right click to save-as).
+Stack them together.  Be very careful to align the pins correctly before plugging into USB (ie: the power source), or you can damage the board.  Then use the Arduino SDK to upload [octaveRounder.ino](octaveRounder.ino) into the Arduino board over the USB (press the 'Raw' button to get a downloadable link in your browser that you can right click to save-as).
   
 >Note that in order to load programs, the MIDI shield usually 
 >needs to be disabled with a switch/jumper during the program
