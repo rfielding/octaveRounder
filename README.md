@@ -205,7 +205,10 @@ This is what the circuit looks like
 
 Here is a working implementation of it.
 Notice that there is no power going into it, yet it works.
-It is using standard 3-pin MIDI to do this.
+It is using standard 3-pin MIDI to do this, so it is not using any extra pins.
+Only a few devices that I know of (Ploytec PL2) use this technique.
+This is only possible because of the extremely low power consumption of
+these boards. 
 
 ![screen](images/minipro5vscreen.jpg)
 
