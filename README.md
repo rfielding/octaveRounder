@@ -195,8 +195,11 @@ because we get our power from the input.
 >only connects pins 4 and 5 internally, and it could work with normal powered
 >devices.  In fact, many MIDI cables save on cost by not bothering to have
 >wires 1 or 3 in the cable at all (not used in the spec, sometimes used
->for phantom power).  But that ground on wire 2 being connected on 
->only one end of the cable seems to exist for exactly this purpose.
+>for phantom power).  An even cheaper cable might remove wire 2 even though
+>it is explicitly mentioned in the standard.
+>
+>The ground on wire 2 being connected on only one end of the 
+>cable seems to exist for exactly this purpose.
 
 This is what the circuit looks like
 
