@@ -168,6 +168,47 @@ The mapping from rcvd\_note to sent\_note is done by the note\_adjust variable. 
 
 Note that in the implementation that we only read new bytes in the main loop, where we simply consume all available bytes.  Because we may shift or rewrite the information we send, we rely on MIDI protocol using fixed length messages.  We enqueue full messages before sending the response.  We do this so that we can do things like insert pitch bends before note sends, or insert note off before redundant note on, etc.
 
+#MIDI IN Powered
+
+It is possible (desirable actually), to just use Arduino Pro Mini 5v
+boards to just allow MIDI IN itself to supply the power.
+This allows you to also reduce costs to that of a $5 board,
+an $8 MIDI cable (that you cut in half), and a one time-cost of an FTDI
+programmer ($10) to program these boards.
+
+This works by borrowing MIDI pin 4 for power, pin 2 for ground
+at our intercept point in the cable.
+We then take pin 5 (which was our MIDI IN's tx from its point of view),
+and send it into the Arduino at rx, and send it back out as tx.
+
+Because MIDI does not seem to define unpowered circuits,
+this circuit is non-standard.
+I pass both rx and tx through 220 Ohms for the safety of the components
+that connect to us.
+We cannot be optically isolated like the standard MIDI circuit,
+because we get our power from the input.
+
+>Note that in the MIDI standard circuit (documented in the MMA website),
+>they have a strange feature where MIDI out connects to the ground
+>wire (2) of the cable, but the MIDI in does not connect it.
+>That means that it's possible that you may have a MIDI cable that
+>only connects pins 4 and 5 internally, and it could work with normal powered
+>devices.  In fact, many MIDI cables save on cost by not bothering to have
+>wires 1 or 3 in the cable at all (not used in the spec, sometimes used
+>for phantom power).  But that ground on wire 2 being connected on 
+>only one end of the cable seems to exist for exactly this purpose.
+
+This is what the circuit looks like
+
+
+![circuit](images/minipro5vcircuit.jpg)
+
+Here is a working implementation of it.
+Notice that there is no power going into it, yet it works.
+It is using standard 3-pin MIDI to do this.
+
+![screen](images/minipro5vscreen.jpg)
+
 #Todo
 
 There exists code for a display and some external buttons, with manual octave up/down in particular.
