@@ -6,6 +6,8 @@ const byte cmd_last_never = 255;
 const int split_point = 60;
 const int oct_notes = 12;
 const int ceiling7bit = 128;
+const byte no_idx = 255;
+const int max_fingers = 12;
 
 byte running_status = 0;
 byte cmd_channel = 0;
@@ -25,18 +27,94 @@ int pitch_wheel_sent = pitch_wheel_centered;
 int pitch_wheel_adjust = 0;
 int pitch_wheel_semis = 2;
 int note_adjust = 0;
+int note_state_count = 0;
 
 struct note_state {
+  byte idx;
   byte id;
   byte sent_note;
   byte sent_vol;
-} notes[midi_note_count];
+} _notes[max_fingers];
 
-void pinSetup() {
-  for(int i=0; i<oct_notes; i++) {
-    pinMode(i+2, OUTPUT);
-    digitalWrite(i+2, LOW);    
+static int findNoteStateIdx(int idx) {
+  for(int i=0; i<note_state_count; i++) {
+    if(idx == _notes[i].idx) {
+      return i;
+    }
   }
+  return no_idx;
+}
+
+static int createNoteStateIdx(int idx) {
+   _notes[note_state_count].idx = idx;
+   _notes[note_state_count].id = 0;
+   _notes[note_state_count].sent_vol = 0;
+   _notes[note_state_count].sent_note = 0;
+   note_state_count++;
+   return note_state_count - 1;  
+}
+
+static int findCreateNoteStateIdx(int idx) {
+  int i = findNoteStateIdx(idx);
+  if(i == no_idx) {
+    return createNoteStateIdx(idx);
+  }
+  return i;
+}
+
+static void freeNoteStateIdx(int idx) {
+  if( note_state_count > 0 ) {
+    //Overwrite the hole with the last entry and shrink the list by 1
+    int i = findNoteStateIdx(idx);
+    int j = note_state_count - 1;
+    _notes[i].idx = _notes[j].idx;
+    _notes[i].id = _notes[j].id;
+    _notes[i].sent_note = _notes[j].sent_note;
+    _notes[i].sent_vol = _notes[j].sent_vol;
+    note_state_count--;
+  }
+}
+
+#define setNoteStateItem(idx,val,member) \
+  int i = findNoteStateIdx(idx); \
+  if(i == no_idx) { \
+    if(val == 0) { \
+      return; \
+    } \
+    i = createNoteStateIdx(idx); \
+  } \
+  _notes[i].member = val;
+
+#define getNoteStateItem(idx, member) \
+  int i = findNoteStateIdx(idx); \
+  if(i == no_idx) { \
+    return 0; \
+  } \
+  return _notes[i].member;
+
+    
+static void setNoteStateId(int idx, byte id) {
+  setNoteStateItem(idx, id, id);
+}
+
+static byte getNoteStateId(int idx) {
+  getNoteStateItem(idx, id);
+}
+
+static byte getNoteStateSent(int idx) {
+  getNoteStateItem(idx, sent_note);
+}
+
+static void setNoteStateSent(int idx, byte n) {
+  setNoteStateItem(idx, n, sent_note);
+}
+
+static byte getNoteStateVol(int idx) {
+  getNoteStateItem(idx, sent_vol);
+}
+
+static void setNoteStateVol(int idx, byte vol) {
+  setNoteStateItem(idx, vol, sent_vol);
 }
 
 /**
@@ -60,13 +138,8 @@ void setup() {
   rpn_msb = 0x7F;
   rpn_msb_data = 0;
   rpn_lsb_data = 0;
-  for (int i = 0; i < midi_note_count; i++) {
-    notes[i].id = 0;
-    notes[i].sent_note = 0;
-    notes[i].sent_vol = 0;
-  }
+  note_state_count = 0;
   Serial.begin(midi_serial_rate);
-  //pinSetup(); !! DO NOT INCLUDE THIS IF BOARD USES ANY DIGITAL PINS 2-13 FOR READ
 }
 
 static int cmd_arg_count(const byte c) {
@@ -126,8 +199,8 @@ static void note_message_re_xmit(const int n, const int v) {
 
 static void note_message_xmit() {
   status_xmit(cmd_state, cmd_channel);
-  Serial.write( notes[cmd_args[0]].sent_note );
-  Serial.write( notes[cmd_args[0]].sent_vol );
+  Serial.write( getNoteStateSent(cmd_args[0]) );
+  Serial.write( getNoteStateVol(cmd_args[0]) );
 }
 
 static int in_quartertone_zone(const byte n) {
@@ -179,35 +252,35 @@ static void find_leader(byte* ptr_lead_idx, int* ptr_lead_same) {
   int lead_id = 0;
   int notes_on = 0;
   for (byte i = 0; i < midi_note_count; i++) {
-    if ( notes[i].sent_vol > 0 ) {
+    if ( getNoteStateVol(i) > 0 ) {
       notes_on++;
-      if ( lead_id <= notes[i].id ) {
-        lead_id  = notes[i].id;
+      if ( lead_id <= getNoteStateId(i) ) {
+        lead_id  = getNoteStateId(i);
         *ptr_lead_idx = i;
       }
     }
   }
   if (notes_on == 0) {
     for (byte i = 0; i < midi_note_count; i++) {
-      notes[i].id = 0;
+      setNoteStateId(i, 0);
       cmd_id = 0;
     }
   }
-  *ptr_lead_same = ((*ptr_lead_idx != n) && (notes[n].sent_note == notes[*ptr_lead_idx].sent_note));
+  *ptr_lead_same = ((*ptr_lead_idx != n) && (getNoteStateSent(n) == getNoteStateSent(*ptr_lead_idx)));
 }
 
 static void note_turnoff() {
   status_xmit(cmd_state, cmd_channel);
-  Serial.write( notes[cmd_args[0]].sent_note );
+  Serial.write( getNoteStateSent(cmd_args[0]) );
   Serial.write( 0 );
 }
 
 static int count_duplicates() {
   int count = 0;
   const byte n = cmd_args[0];
-  const byte nSend = notes[n].sent_note;
+  const byte nSend = getNoteStateSent(n);
   for (byte i = 0; i < midi_note_count; i++) {
-    if (notes[i].sent_note == nSend && notes[i].sent_vol > 0) {
+    if (getNoteStateSent(i) == nSend && getNoteStateVol(i) > 0) {
       count++;
     }
   }
@@ -223,23 +296,23 @@ static void note_message() {
     const byte nSend = oct_rounding();
     find_leader(&lead_idx, &lead_same);
     cmd_id++;
-    notes[n].id = cmd_id; //overwrites existing if it's still on
-    notes[n].sent_note = nSend; //!overwritten so that lead_same is different when recomputed now!
-    notes[n].sent_vol = cmd_args[1];
+    setNoteStateId(n, cmd_id);
+    setNoteStateSent(n, nSend); //!overwritten so that lead_same is different when recomputed now!
+    setNoteStateVol(n, cmd_args[1]);
     const int count = count_duplicates();
     if (lead_same || count > 1) {
       note_turnoff(); //Done so that total on and off for a note always end up as 0
     }
-    if (n == lead_idx || notes[n].sent_note != notes[lead_idx].sent_note) {
+    if (n == lead_idx || getNoteStateSent(n) != getNoteStateSent(lead_idx)) {
       quartertone_adjust(n);
       pitch_wheel_xmit();
     }
     note_message_xmit();
     cmd_last = cmd_args[0];
   } else {
-    const int old_vol = notes[n].sent_vol;
-    notes[n].sent_vol = 0;
-    notes[n].id = 0;
+    const int old_vol = getNoteStateVol(n);
+    setNoteStateVol(n, 0);
+    setNoteStateId(n, 0);
     note_turnoff();
     //Find the leader, and set the pitch wheel back to his setting
     find_leader(&lead_idx, &lead_same);
@@ -247,8 +320,9 @@ static void note_message() {
     pitch_wheel_xmit();
     //If we just unburied the same note, then turn it back on (midi mono won't but should)
     if (lead_same) {
-      note_message_re_xmit(notes[n].sent_note, old_vol);
+      note_message_re_xmit(getNoteStateSent(n), old_vol);
     }
+    freeNoteStateIdx(n);
   }
 }
 
@@ -331,24 +405,10 @@ static void byte_enqueue(byte b) {
   }
 }
 
-byte ledStates[oct_notes];
-
-static void blinkys() {
-  for(int i=0; i<oct_notes; i++) {
-    ledStates[i] = LOW;
-  }
-  for(int i=0; i<midi_note_count; i++) {
-    ledStates[i%12] |= (notes[i].sent_vol > 0);
-  }
-  for(int i=0; i<oct_notes; i++) {
-    digitalWrite(i+2, ledStates[i]);
-  }
-}
 
 //No calls to available or read should happen elsewhere
 void loop() {
   while (Serial.available()) {
     byte_enqueue(Serial.read());
   }
-  //blinkys(); !!DO NOT INCLUDE THIS FUNCTION IF ANY DIGITAL PINS 2-13 ARE WIRED FOR READ, AS A PEDAL WITH A FOOTSWITCH WOULD BE.  IT CAN SHORT THE BOARD!!
 }
