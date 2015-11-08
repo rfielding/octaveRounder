@@ -215,6 +215,13 @@ these boards.
 
 ![screen](images/minipro5vscreen.jpg)
 
+And here is one that you can fit into your pocket because it's just
+a short MIDI cable cut in half with the board inserted into the middle.
+This is useful for keeping with you for trips to guitar center, to discretly
+try this out on synths.
+
+![screen](images/cutupcable.jpg)
+
 #Todo
 
 There exists code for a display and some external buttons, with manual octave up/down in particular.
