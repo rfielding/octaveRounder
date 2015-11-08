@@ -156,12 +156,7 @@ int runTest(const char* name, const byte* data, size_t size, const byte* result,
 	for(int i=0; i<iterations; i++) {
 		loop();
 	}
-	//Check for stuck notes
-	int totalVolume = 0;
-	for(int i=0; i<midi_note_count; i++) {
-		totalVolume += notes[i].sent_vol;
-	}
-	if(totalVolume != 0) {
+	if(note_state_count > 0) {
 		printf("stuck note!\n");
 		exit(-1);
 	}
