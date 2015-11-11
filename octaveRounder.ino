@@ -28,6 +28,7 @@ int pitch_wheel_adjust = 0;
 int pitch_wheel_semis = 2;
 int note_adjust = 0;
 int note_state_count = 0;
+int clock_tick = 0;
 
 struct note_state {
   byte idx;
@@ -139,6 +140,7 @@ void setup() {
   rpn_msb_data = 0;
   rpn_lsb_data = 0;
   note_state_count = 0;
+  pinMode(13, OUTPUT);
   Serial.begin(midi_serial_rate);
 }
 
@@ -377,6 +379,18 @@ static void byte_enqueue(byte b) {
   if ((b & 0xF0) == 0xF0) {
     cmd_state = 0xF0;
     Serial.write(b);
+    if(b == 0xFA) {
+      clock_tick = 0;
+    }
+    if(b == 0xF8) {
+      if((clock_tick % 24) == 0) {
+        digitalWrite(13,HIGH);
+      }
+      if((clock_tick % 24) == 12) {
+        digitalWrite(13,LOW);
+      }
+      clock_tick++;
+    }
     if (b == 0xFF) {
       setup(); //Let's reset if we see a MIDI reset going by.
     }
