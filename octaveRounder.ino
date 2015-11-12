@@ -385,6 +385,7 @@ static void byte_enqueue(byte b) {
     if(b == 0xF8) {
       if((clock_tick % 24) == 0) {
         digitalWrite(13,HIGH);
+        clock_tick = 0;
       }
       if((clock_tick % 24) == 12) {
         digitalWrite(13,LOW);
