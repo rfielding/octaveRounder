@@ -158,6 +158,15 @@ In order to correctly set pitch bending on mono voice keyboards when a finger co
 |          127|      |            |         |
 
 >In this table, all blank entries are zero.  When all fingers come up, id starts from 1 again.
+>
+> Note that the current implementation does not literally use an array.
+> Since there will never be more than a dozen fingers down at once,
+> A sparse array is used, and set/get functions supplied to access the array.
+> When a note slot has been freed by note up, we call a free on that element
+> to free the array slot.  This way, rather than having (3 x byte x 128) usage,
+> we have (4 x byte x 12) usage instead.
+> This is critical in staying below 512 bytes of total storage, which
+> the smallest devices must fit into, such as Arduino Mini.
 
 Because incoming notes get translated into outgoing notes, we record the sent note to make sure that we turn off the note that we turned on in the synth.
 When a note is turned off, the sent\_vol is set to zero along with the id.  We have three notes still on.  There are gaps in the notes still turned on, because fingers have come up since this chord was held down.  If finger 62 comes up, there would be no audible response, as that note is still buried by finger 60.  Since finger 60 has the highest number, it is still the leader.  If finger 60 instead came up, then 62 would be the new leader, as it would have the highest current id.
