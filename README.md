@@ -231,6 +231,13 @@ try this out on synths.
 
 ![screen](images/cutupcable.jpg)
 
+The cut up cable may be electrically unsound without the resistors on tx/rx,
+so this is one that puts those signals through 220 resistors.  It works
+exactly like the cut up cable does, but I have more confidence when plugging
+this into equipment that I do not own.
+
+![screen](images/unpowered_permanent_220.npg)
+
 #Todo
 
 There exists code for a display and some external buttons, with manual octave up/down in particular.
