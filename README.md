@@ -236,7 +236,7 @@ so this is one that puts those signals through 220 resistors.  It works
 exactly like the cut up cable does, but I have more confidence when plugging
 this into equipment that I do not own.
 
-![screen](images/unpowered_permanent_220.npg)
+![screen](images/unpowered_permanent_220.jpg)
 
 #Todo
 
