@@ -23,7 +23,10 @@ Demonstration Video (Not a trained or proficient pianist at all):
 
 [![Screenshot](https://i.ytimg.com/vi_webp/IfWY_6Q8RX4/hqdefault.webp)](https://www.youtube.com/watch?v=IfWY_6Q8RX4)
 
-Tutorial video on using the quartertone split:
+https://www.youtube.com/watch?v=IfWY_6Q8RX4
+
+
+And a tutorial video on using the quartertone split:
 
 https://www.youtube.com/watch?v=vimtrlz7cGs
 
