@@ -1,3 +1,7 @@
+rob.fielding@gmail.com
+
+![bitcoin](images/bitcoin.png)
+
 #The Project
 
 ![arduino](images/arduino.png)
